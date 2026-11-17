@@ -130,7 +130,10 @@ function play(){
   if (timer){ stop(); return; }
   if (+sl.value >= +sl.max) sl.value = sl.min;
   cur=+sl.value; document.getElementById('play').textContent='⏸';
-  timer=setInterval(()=>{ cur += (+document.getElementById('tempo').value)*0.1;
+  // Long gaps between two locations (e.g. at night) are compressed to at most 10 min, otherwise the replay seems to stand still
+  timer=setInterval(()=>{ let step=(+document.getElementById('tempo').value)*0.1;
+    const n=pts.findIndex(q=>q[0]>cur); if(n>0){ const gap=pts[n][0]-pts[n-1][0]; if(gap>600) step*=gap/600; }
+    cur += step;
     if (cur >= +sl.max){ cur=+sl.max; sl.value=cur; zeigeZeit(cur,true); stop(); return; }
     sl.value=cur; zeigeZeit(cur,true);
     if (!map.getBounds().pad(-0.1).contains(mover.getLatLng())) map.panTo(mover.getLatLng()); },100);

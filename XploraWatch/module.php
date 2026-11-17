@@ -208,6 +208,51 @@ class XploraWatch extends IPSModule
         return $this->Request('RequestLocation') !== null;
     }
 
+    /** WebHook: delivers the history page if the token matches. */
+    protected function ProcessHookData()
+    {
+        if (!$this->ReadPropertyBoolean('ShowHistory') || !hash_equals($this->ReadAttributeString('HookToken'), (string) ($_GET['t'] ?? ''))) {
+            http_response_code(404);
+            echo 'Not found';
+            return;
+        }
+        $days = max(1, $this->ReadPropertyInteger('HistoryDays'));
+        $limit = time() - $days * 86400;
+        $stored = json_decode($this->ReadAttributeString('History'), true) ?: [];
+        $points = array_values(array_filter($stored, static fn (array $p): bool => $p[0] >= $limit));
+        $data = [
+            'name'   => $this->GetWatchName(),
+            'p'      => $points,
+            'home'   => $this->GetHome(),
+            'radius' => $this->ReadPropertyInteger('HomeRadius'),
+            'days'   => $days,
+            'theme'  => $this->ReadPropertyInteger('TileTheme'),
+            'lang'   => $this->Translate('en-US'),
+            't'      => [
+                'today'      => $this->Translate('Today'),
+                'prev'       => $this->Translate('Previous day'),
+                'next'       => $this->Translate('Next day'),
+                'map'        => $this->Translate('Map'),
+                'satellite'  => $this->Translate('Satellite'),
+                'center'     => $this->Translate('Center'),
+                'play'       => $this->Translate('Replay'),
+                'empty'      => $this->Translate('No locations on this day'),
+                'distance'   => $this->Translate('Distance (straight line)'),
+                'away'       => $this->Translate('Away from home'),
+                'points'     => $this->Translate('Locations'),
+                'period'     => $this->Translate('Period'),
+                'stays'      => $this->Translate('Stays'),
+                'atHome'     => $this->Translate('at home'),
+                'kmFromHome' => $this->Translate('%s km from home'),
+                'stay'       => $this->Translate('stay'),
+            ],
+        ];
+        header('Content-Type: text/html; charset=utf-8');
+        header('Cache-Control: no-store');
+        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG);
+        echo str_replace('/*__DATA__*/null', $json, (string) file_get_contents(__DIR__ . '/history.html'));
+    }
+
     private function Request(string $function)
     {
         $response = $this->SendDataToParent(json_encode([
@@ -398,50 +443,6 @@ class XploraWatch extends IPSModule
             . $battery
             . '<div class="xl"><span>' . $e($this->Translate('Location')) . '</span><span>' . $e($when . ($d['type'] !== '' ? ' · ' . $d['type'] : '')) . '</span></div>'
             . '</div></div>';
-    }
-
-    /** WebHook: delivers the history page if the token matches. */
-    protected function ProcessHookData()
-    {
-        if (!$this->ReadPropertyBoolean('ShowHistory') || !hash_equals($this->ReadAttributeString('HookToken'), (string) ($_GET['t'] ?? ''))) {
-            http_response_code(404);
-            echo 'Not found';
-            return;
-        }
-        $days = max(1, $this->ReadPropertyInteger('HistoryDays'));
-        $points = array_values(array_filter(json_decode($this->ReadAttributeString('History'), true) ?: [],
-            static fn (array $p): bool => $p[0] >= time() - $days * 86400));
-        $data = [
-            'name'   => $this->GetWatchName(),
-            'p'      => $points,
-            'home'   => $this->GetHome(),
-            'radius' => $this->ReadPropertyInteger('HomeRadius'),
-            'days'   => $days,
-            'theme'  => $this->ReadPropertyInteger('TileTheme'),
-            'lang'   => $this->Translate('en-US'),
-            't'      => [
-                'today'      => $this->Translate('Today'),
-                'prev'       => $this->Translate('Previous day'),
-                'next'       => $this->Translate('Next day'),
-                'map'        => $this->Translate('Map'),
-                'satellite'  => $this->Translate('Satellite'),
-                'center'     => $this->Translate('Center'),
-                'play'       => $this->Translate('Replay'),
-                'empty'      => $this->Translate('No locations on this day'),
-                'distance'   => $this->Translate('Distance (straight line)'),
-                'away'       => $this->Translate('Away from home'),
-                'points'     => $this->Translate('Locations'),
-                'period'     => $this->Translate('Period'),
-                'stays'      => $this->Translate('Stays'),
-                'atHome'     => $this->Translate('at home'),
-                'kmFromHome' => $this->Translate('%s km from home'),
-                'stay'       => $this->Translate('stay'),
-            ],
-        ];
-        header('Content-Type: text/html; charset=utf-8');
-        header('Cache-Control: no-store');
-        echo str_replace('/*__DATA__*/null', json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG),
-            (string) file_get_contents(__DIR__ . '/history.html'));
     }
 
     /** Adds a location to the history (only new location times) and removes points older than the retention. */
