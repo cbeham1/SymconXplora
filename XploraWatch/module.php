@@ -72,7 +72,7 @@ class XploraWatch extends IPSModule
         }
     }
 
-    public function ReceiveData(string $JSONString): string
+    public function ReceiveData($JSONString): string
     {
         // The cloud instance does not push data
         return '';

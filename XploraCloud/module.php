@@ -75,7 +75,7 @@ class XploraCloud extends IPSModule
      * "Function" (GetWards, GetLastLocation, RequestLocation) and "WardID".
      * Returns a JSON object with either "result" or "error".
      */
-    public function ForwardData(string $JSONString): string
+    public function ForwardData($JSONString): string
     {
         $data = json_decode($JSONString, true);
         $request = json_decode((string) ($data['Buffer'] ?? ''), true);

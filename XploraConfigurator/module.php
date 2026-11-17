@@ -25,7 +25,7 @@ class XploraConfigurator extends IPSModule
         parent::ApplyChanges();
     }
 
-    public function ReceiveData(string $JSONString): string
+    public function ReceiveData($JSONString): string
     {
         return '';
     }
