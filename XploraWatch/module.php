@@ -189,6 +189,8 @@ class XploraWatch extends IPSModule
                 'type'     => (string) ($location['locateType'] ?? ''),
                 'lat'      => $latitude,
                 'lng'      => $longitude,
+                'address'  => $address,
+                'accuracy' => $accuracy,
             ]));
         }
 
@@ -360,7 +362,11 @@ class XploraWatch extends IPSModule
             . 'src="https://www.openstreetmap.org/export/embed.html?bbox=' . $box . '&amp;layer=mapnik&amp;marker=' . $marker . '"></iframe>';
     }
 
-    /** Status tile: at home / on the way, distance, battery, last location; optional light map of the location as background. */
+    /**
+     * Status tile (same look as other status tiles): header with watch name and status chip, battery ring,
+     * status and distance, location time and accuracy, address; optional map of the location in the background.
+     * Sizes follow the tile size (container query units).
+     */
     private function TileHTML(array $d): string
     {
         $e = static fn (string $text): string => htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
@@ -368,6 +374,7 @@ class XploraWatch extends IPSModule
         $warn = '#f5a623';
         $bad = '#e74c3c';
         $info = '#4aa3ff';
+        $dec = $this->Translate('.');
 
         if ($d['atHome'] !== null) {
             $status = $this->Translate($d['atHome'] ? 'At home' : 'On the way');
@@ -376,28 +383,43 @@ class XploraWatch extends IPSModule
             $status = $d['zone'] !== '' ? $d['zone'] : $this->Translate('Located');
             $color = $info;
         }
-        $sub = [];
+        $sub = '';
         if ($d['distance'] !== null && !$d['atHome']) {
-            $sub[] = $d['distance'] < 1000
-                ? sprintf($this->Translate('%d m away'), (int) round($d['distance']))
-                : sprintf($this->Translate('%s km away'), number_format($d['distance'] / 1000, 1, $this->Translate('.'), ''));
-        }
-        if ($d['zone'] !== '' && $d['atHome'] !== null) {
-            $sub[] = $d['zone'];
+            $sub = $d['distance'] < 1000
+                ? sprintf($this->Translate('%d m from home'), (int) round($d['distance']))
+                : sprintf($this->Translate('%s km from home'), number_format($d['distance'] / 1000, 1, $dec, ''));
+        } elseif ($d['zone'] !== '' && $d['atHome'] !== null) {
+            $sub = $d['zone'];
         }
         $when = $d['time'] <= 0 ? '–' : (date('Ymd', $d['time']) === date('Ymd') ? date('H:i', $d['time']) : date('d.m. H:i', $d['time']));
+        $type = strtoupper($d['type']) === 'WIFI' ? 'WLAN' : $d['type'];
 
-        $battery = '';
+        // Battery ring
+        $ring = '';
         if ($d['battery'] !== null) {
             $bc = $d['battery'] <= 20 ? $bad : ($d['battery'] <= 40 ? $warn : $ok);
-            $battery = '<div class="xb"><i style="width:' . $d['battery'] . '%;background:' . $bc . '"></i></div>'
-                . '<div class="xl"><span>' . $e($this->Translate('Battery')) . '</span><b style="color:' . $bc . '">'
-                . $d['battery'] . ' %' . ($d['charging'] ? ' ⚡' : '') . '</b></div>';
+            $circ = 2 * M_PI * 42;
+            $ring = '<svg class="xr" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="none" stroke="var(--track)" stroke-width="9"/>'
+                . '<circle cx="50" cy="50" r="42" fill="none" stroke="' . $bc . '" stroke-width="9" stroke-linecap="round" stroke-dasharray="' . round($circ, 1)
+                . '" stroke-dashoffset="' . round($circ * (1 - $d['battery'] / 100), 1) . '" transform="rotate(-90 50 50)"/>'
+                . '<text x="50" y="50" text-anchor="middle" dominant-baseline="central" fill="var(--fg)" font-size="22" font-weight="bold">' . $d['battery'] . '%</text>'
+                . '<text x="50" y="71" text-anchor="middle" fill="var(--sub)" font-size="10">' . ($d['charging'] ? '⚡ ' : '') . $e($this->Translate('Battery')) . '</text></svg>';
         }
+
+        // Value tiles: location time/type and accuracy (or safe zone)
+        $tiles = '<div class="xv"><span>' . $e($this->Translate('Location')) . '</span><b>' . $e($when . ($type !== '' ? ' · ' . $type : '')) . '</b></div>';
+        if ($d['zone'] !== '') {
+            $tiles .= '<div class="xv"><span>' . $e($this->Translate('Safe zone')) . '</span><b>' . $e($d['zone']) . '</b></div>';
+        } else {
+            $tiles .= '<div class="xv"><span>' . $e($this->Translate('Accuracy')) . '</span><b>± ' . (int) $d['accuracy'] . ' m</b></div>';
+        }
+        $address = $d['address'] !== ''
+            ? '<div class="xl"><span>' . $e($this->Translate('Address')) . '</span><b>' . $e($d['address']) . '</b></div>'
+            : '';
 
         $map = '';
         if ($this->ReadPropertyBoolean('TileMap')) {
-            // 3x3 tiles (zoom 15) of the Esri "Light/Dark Gray Canvas" maps (no key needed), shifted so that the location is at 50 % / 30 % of the tile
+            // 3x3 tiles (zoom 15) of the Esri "Light/Dark Gray Canvas" maps (no key needed), shifted so that the location is at 50 % / 24 % of the tile
             $zoom = 15;
             $n = 2 ** $zoom;
             $x = ($d['lng'] + 180) / 360 * $n;
@@ -416,27 +438,26 @@ class XploraWatch extends IPSModule
                 unset($layers['d']);
             }
             foreach ($layers as $class => $layer) {
-                $tiles = '';
+                $images = '';
                 for ($j = -1; $j <= 1; $j++) {
                     for ($i = -1; $i <= 1; $i++) {
-                        $tiles .= '<img alt="" src="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/' . $layer . '/MapServer/tile/'
+                        $images .= '<img alt="" src="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/' . $layer . '/MapServer/tile/'
                             . $zoom . '/' . ($ty + $j) . '/' . ($tx + $i) . '">';
                     }
                 }
-                $map .= '<div class="xt ' . $class . '" style="left:calc(50% - ' . $px . 'px);top:calc(30% - ' . $py . 'px)">' . $tiles . '</div>';
+                $map .= '<div class="xt ' . $class . '" style="left:calc(50% - ' . $px . 'px);top:calc(24% - ' . $py . 'px)">' . $images . '</div>';
             }
-            $map = '<div class="xm">' . $map . '</div>'
-                . '<div class="xo"></div><div class="xp" style="background:' . $color . ';box-shadow:0 0 0 6px ' . $color . '55"></div>'
+            $map = '<div class="xm">' . $map . '</div><div class="xo"></div>'
+                . '<div class="xp" style="background:' . $color . ';box-shadow:0 0 0 6px ' . $color . '44"></div>'
                 . '<div class="xa">Esri, HERE, Garmin, © OpenStreetMap</div>';
         }
-        $icon = $map !== '' ? '' : '<svg class="xi" viewBox="0 0 24 24" style="stroke:' . $color . '"><rect x="6.5" y="6" width="11" height="12" rx="2.5"/>'
-            . '<path d="M9 6l.6-3h4.8l.6 3M9 18l.6 3h4.8l.6-3M12 9.5V12l1.8 1.2"/></svg>';
 
-        // Colors of both themes as CSS variables
-        $dark = '--fg:#e9eef3;--name:#c9d2db;--sub:#9aa5b1;--track:rgba(255,255,255,.13);--att:#c9d2db;'
-            . '--o1:rgba(24,28,33,.15);--o2:rgba(24,28,33,.35);--o3:rgba(24,28,33,.9)';
-        $light = '--fg:#1f2933;--name:#3e4a56;--sub:#5b6672;--track:rgba(0,0,0,.1);--att:#333;'
-            . '--o1:rgba(255,255,255,.1);--o2:rgba(255,255,255,.35);--o3:rgba(255,255,255,.92)';
+        $icon = '<svg class="xi" viewBox="0 0 24 24"><rect x="6.5" y="6" width="11" height="12" rx="2.5"/><path d="M9 6l.6-3h4.8l.6 3M9 18l.6 3h4.8l.6-3M12 9.5V12l1.8 1.2"/></svg>';
+
+        $dark = '--fg:#e8edf2;--name:#e8edf2;--sub:#9aa5b1;--track:rgba(255,255,255,.09);--box:rgba(255,255,255,.07);--line:rgba(255,255,255,.08);--att:#c9d2db;'
+            . '--bg:#1d2228;--card:linear-gradient(160deg,#252b32,#1a1e23);--o1:rgba(29,34,40,.15);--o2:rgba(29,34,40,.8);--o3:#1d2228';
+        $light = '--fg:#1f2933;--name:#1f2933;--sub:#5b6672;--track:rgba(0,0,0,.08);--box:rgba(0,0,0,.05);--line:rgba(0,0,0,.08);--att:#333;'
+            . '--bg:#ffffff;--card:linear-gradient(160deg,#ffffff,#f1f4f8);--o1:rgba(255,255,255,.1);--o2:rgba(255,255,255,.85);--o3:#ffffff';
         $theme = $this->ReadPropertyInteger('TileTheme');
         $vars = $theme === 2 ? '.xw{' . $light . '}.xt.d{display:none}' : '.xw{' . $dark . '}.xt.l{display:none}';
         if ($theme === 0) {
@@ -444,31 +465,40 @@ class XploraWatch extends IPSModule
         }
 
         $css = '<style>'
-            . 'html,body{margin:0;height:100%;background:transparent;font-family:"Segoe UI",Arial,sans-serif}'
-            . '.xw{position:relative;height:100%;min-height:240px;box-sizing:border-box;border:1px solid ' . $color . '66;border-radius:12px;overflow:hidden;color:var(--fg);background:' . $color . '12}'
+            . 'html,body{margin:0;height:100%;background:transparent;font-family:"Segoe UI",Arial,sans-serif;overflow:hidden}'
+            . '.xw{position:relative;height:100%;min-height:240px;box-sizing:border-box;container-type:size;border:1px solid var(--line);border-top:3px solid ' . $color . ';border-radius:12px;overflow:hidden;color:var(--fg);background:var(--card)}'
+            . '.xw *{box-sizing:border-box}'
             . '.xm{position:absolute;inset:0;overflow:hidden}'
             . '.xt{position:absolute;width:768px;height:768px;display:grid;grid-template-columns:repeat(3,256px)}'
             . '.xt img{width:256px;height:256px;display:block}'
-            . '.xo{position:absolute;inset:0;background:linear-gradient(180deg,var(--o1) 0%,var(--o2) 40%,var(--o3) 70%)}'
-            . '.xp{position:absolute;left:50%;top:30%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;border:2px solid #fff}'
-            . '.xa{position:absolute;right:6px;top:4px;font-size:9px;color:var(--att);opacity:.7}'
-            . '.xc{position:relative;height:100%;box-sizing:border-box;padding:14px 16px;display:flex;flex-direction:column;align-items:center;justify-content:' . ($map !== '' ? 'flex-end' : 'center') . ';text-align:center}'
-            . '.xi{width:46px;height:auto;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;margin-bottom:6px}'
-            . '.xn{font-size:19px;font-weight:bold;color:var(--name)}'
-            . '.xs{font-size:34px;font-weight:bold;margin:2px 0;line-height:1.15}'
-            . '.xu{color:var(--sub);font-size:14px;margin-top:3px;min-height:18px}'
-            . '.xb{width:100%;height:12px;border-radius:6px;background:var(--track);overflow:hidden;margin-top:14px}'
-            . '.xb i{display:block;height:100%}'
-            . '.xl{width:100%;display:flex;justify-content:space-between;font-size:15px;color:var(--name);margin-top:6px}'
+            . '.xo{position:absolute;inset:0;background:linear-gradient(180deg,var(--o1) 0%,var(--o1) 22%,var(--o2) 42%,var(--o3) 58%)}'
+            . '.xp{position:absolute;left:50%;top:24%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;border:2px solid #fff}'
+            . '.xa{position:absolute;right:8px;top:calc(46% - 14px);font-size:9px;color:var(--att);opacity:.6}'
+            . '.xc{position:relative;height:100%;display:flex;flex-direction:column;gap:clamp(6px,2.2cqh,12px);padding:clamp(10px,3cqh,16px) clamp(12px,4cqw,18px)}'
+            . '.xh{display:flex;justify-content:space-between;align-items:center;gap:8px}'
+            . '.xh b{display:flex;align-items:center;gap:8px;font-size:clamp(15px,4.8cqw,19px);color:var(--name);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+            . '.xi{width:clamp(20px,6cqw,26px);height:auto;flex:none;fill:none;stroke:' . $color . ';stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}'
+            . '.xch{border:1px solid ' . $color . '66;background:' . $color . '22;color:' . $color . ';border-radius:20px;padding:3px 11px;font-size:clamp(11px,3.2cqw,13px);font-weight:bold;white-space:nowrap}'
+            . '.xg{flex:1}'
+            . '.xhero{display:flex;align-items:center;gap:clamp(10px,4cqw,18px)}'
+            . '.xr{width:clamp(72px,min(26cqw,22cqh),130px);height:auto;flex:none}'
+            . '.xs{font-size:clamp(22px,min(9cqw,8cqh),40px);font-weight:bold;line-height:1.1;color:' . $color . '}'
+            . '.xu{color:var(--sub);font-size:clamp(12px,3.6cqw,15px);margin-top:3px}'
+            . '.xvs{display:grid;grid-template-columns:1fr 1fr;gap:clamp(6px,1.8cqh,10px)}'
+            . '.xv{background:var(--box);border-radius:10px;padding:clamp(6px,1.8cqh,10px) 12px;display:flex;flex-direction:column;min-width:0}'
+            . '.xv span{color:var(--sub);font-size:clamp(11px,3.2cqw,13px)}'
+            . '.xv b{font-size:clamp(14px,4.6cqw,19px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+            . '.xl{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding-top:clamp(5px,1.5cqh,8px);font-size:clamp(12px,3.6cqw,15px)}'
+            . '.xl span{color:var(--sub);flex:none}.xl b{text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
             . $vars
             . '</style>';
 
-        return $css . '<div class="xw">' . $map . '<div class="xc">' . $icon
-            . '<div class="xn">' . $e($this->GetWatchName()) . '</div>'
-            . '<div class="xs" style="color:' . $color . '">' . $e($status) . '</div>'
-            . '<div class="xu">' . $e(implode(' · ', $sub)) . '</div>'
-            . $battery
-            . '<div class="xl"><span>' . $e($this->Translate('Location')) . '</span><span>' . $e($when . ($d['type'] !== '' ? ' · ' . $d['type'] : '')) . '</span></div>'
+        return $css . '<div class="xw">' . $map . '<div class="xc">'
+            . '<div class="xh"><b>' . $icon . $e($this->GetWatchName()) . '</b><span class="xch">' . $e($status) . '</span></div>'
+            . '<div class="xg"></div>'
+            . '<div class="xhero">' . $ring . '<div><div class="xs">' . $e($status) . '</div>' . ($sub !== '' ? '<div class="xu">' . $e($sub) . '</div>' : '') . '</div></div>'
+            . '<div class="xvs">' . $tiles . '</div>'
+            . $address
             . '</div></div>';
     }
 

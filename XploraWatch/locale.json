@@ -40,6 +40,7 @@
             "On the way": "Unterwegs",
             "Located": "Geortet",
             "%d m away": "%d m entfernt",
+            "%d m from home": "%d m von zu Hause",
             "%s km away": "%s km entfernt",
             ".": ",",
             "Location": "Ortung",
