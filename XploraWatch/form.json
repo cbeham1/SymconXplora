@@ -38,9 +38,68 @@
                     "caption": "Own home location (if the location of Symcon is not used)"
                 },
                 {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "ValidationTextBox",
+                            "name": "HomeAddress",
+                            "caption": "Address (street, town)",
+                            "width": "400px"
+                        },
+                        {
+                            "type": "Button",
+                            "caption": "Find",
+                            "onClick": "echo XPLW_FindLocation($id, 'HomeLocation', $HomeAddress);"
+                        }
+                    ]
+                },
+                {
                     "type": "NumberSpinner",
                     "name": "HomeRadius",
                     "caption": "Home radius",
+                    "suffix": "m",
+                    "minimum": 0
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Second place",
+            "items": [
+                {
+                    "type": "Label",
+                    "caption": "Optional: a second place such as school, work or a second home. With a location the variables \"At <name>\" and \"Distance to <name>\" are created."
+                },
+                {
+                    "type": "ValidationTextBox",
+                    "name": "Place2Name",
+                    "caption": "Name (e.g. School, Work, Second home)"
+                },
+                {
+                    "type": "SelectLocation",
+                    "name": "Place2Location",
+                    "caption": "Location of the second place"
+                },
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "ValidationTextBox",
+                            "name": "Place2Address",
+                            "caption": "Address (street, town)",
+                            "width": "400px"
+                        },
+                        {
+                            "type": "Button",
+                            "caption": "Find",
+                            "onClick": "echo XPLW_FindLocation($id, 'Place2Location', $Place2Address);"
+                        }
+                    ]
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "Place2Radius",
+                    "caption": "Radius of the second place",
                     "suffix": "m",
                     "minimum": 0
                 }

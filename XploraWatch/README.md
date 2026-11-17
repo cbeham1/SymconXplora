@@ -21,6 +21,8 @@ Shows location, address, safe zone, battery and charging state of one Xplora wat
 * Address, accuracy, location type (GPS/WIFI/…) and time of the location
 * Safe zone of the Xplora app the watch is in
 * Optional: distance to a home location and "At home" (home radius plus accuracy of the location, max. 200 m)
+* Optional: second place (e.g. school, work, second home) with its own name, location and radius – variables
+  "At <name>" and "Distance to <name>"; status tile and location history show the place as well
 * Optional: asks the watch for a new location if the last one is too old (costs some battery of the watch)
 * Optional: status tile for the tile visualization (at home / on the way, distance, battery, time of the location),
   with a light map of the location as background (Esri "Light Gray Canvas" map tiles – Esri, HERE, Garmin, © OpenStreetMap contributors – loaded by the browser of the viewer)
@@ -51,7 +53,11 @@ Best via the Xplora Configurator. Manually: "Add instance" → "Xplora Watch" an
 | Request a new location …      | Minutes after which the watch is asked for a new location; 0 = never (default) |
 | Use the location of Symcon    | Uses the location of the Location Control as home (default on)                |
 | Own home location             | Used if the location of Symcon is not used                                     |
+| Address + "Find"              | Looks up the address (OpenStreetMap Nominatim) and fills in the coordinates (7 decimals) of the location field above; then apply the changes. Also available for the second place |
 | Home radius                   | Meters around the home location that count as home (default 150)             |
+| Second place: name            | e.g. School, Work, Second home (empty = "Second place")                        |
+| Second place: location        | Location of the second place; empty = no second place                          |
+| Second place: radius          | Meters around the second place (default 150, plus accuracy, max. 200 m)        |
 | Create status tile            | HTML box "Status tile" for the tile visualization (default on)                 |
 | Map as background             | Shows a map of the location behind the status tile (default on)                |
 | Design of the status tile     | Automatic (follows light/dark mode of the device), dark or light               |
@@ -72,6 +78,8 @@ Xplora limits the number of requests. Short intervals and frequent location requ
 | Charging   | Charging         | boolean |                |
 | AtHome     | At home          | boolean | ~Presence      |
 | Distance   | Distance to home | float   | XPL.Kilometer  |
+| AtPlace2   | At <name>        | boolean | ~Presence      |
+| DistancePlace2 | Distance to <name> | float | XPL.Kilometer |
 | InSafeZone | In safe zone     | boolean |                |
 | SafeZone   | Safe zone        | string  |                |
 | Address    | Address          | string  |                |
@@ -84,7 +92,8 @@ Xplora limits the number of requests. Short intervals and frequent location requ
 
 | History    | Location history | string  | ~HTMLBox       |
 
-"At home" and "Distance to home" exist only with a home location, "Map" and "Location history" only if enabled.
+"At home" and "Distance to home" exist only with a home location, the two variables of the second place only with its
+location (they are renamed when the name changes), "Map" and "Location history" only if enabled.
 
 With the location history enabled the module registers the WebHook `/hook/XploraWatch<InstanceID>` at the WebHook Control
 (removed again when the instance is deleted). The page only answers with the random token contained in the HTML box.

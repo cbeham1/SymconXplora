@@ -43,7 +43,7 @@ button.on{background:#e08a00;border-color:#e08a00;color:#fff}
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-// D: {name, p:[[unixtime, lat, lng, accuracy_m, type], ...], home:[lat,lng]|null, radius, days, theme, lang, t:{...texts}}
+// D: {name, p:[[unixtime, lat, lng, accuracy_m, type], ...], home:[lat,lng]|null, radius, place2:{pos:[lat,lng], radius, name}|null, days, theme, lang, t:{...texts}}
 const D = /*__DATA__*/null;
 const T = D.t;
 document.documentElement.lang = D.lang;
@@ -78,6 +78,8 @@ setLayer(layer);
 
 const gStrecke = L.layerGroup().addTo(map), gPlay = L.layerGroup().addTo(map);
 if (D.home) L.marker(D.home,{icon:L.divIcon({className:'home',html:'🏠',iconSize:[24,24]}),interactive:false}).addTo(map);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+if (D.place2) L.marker(D.place2.pos,{icon:L.divIcon({className:'home',html:'📍',iconSize:[24,24]})}).bindTooltip(esc(D.place2.name)).addTo(map);
 let mover = null, trail = null;
 
 function farbe(f){ return 'hsl('+(45-35*f)+',95%,'+(68-38*f)+'%)'; }
@@ -154,7 +156,8 @@ function statistik(){
     if (i<pts.length && dist(pts[s][1],pts[s][2],pts[i][1],pts[i][2])<=150) continue;
     const a=pts[s],b=pts[i-1]; if (b[0]-a[0]>=600){
       const hz = D.home && dist(a[1],a[2],D.home[0],D.home[1])<=r(a);
-      st.push(hm(a[0])+'–'+hm(b[0])+' '+(hz?T.atHome:(D.home?T.kmFromHome.replace('%s',dec(dist(a[1],a[2],D.home[0],D.home[1])/1000,1)):T.stay))); }
+      const p2 = !hz && D.place2 && dist(a[1],a[2],D.place2.pos[0],D.place2.pos[1])<=D.place2.radius+Math.min(a[3]||0,200);
+      st.push(hm(a[0])+'–'+hm(b[0])+' '+(hz?T.atHome:(p2?esc(D.place2.name):(D.home?T.kmFromHome.replace('%s',dec(dist(a[1],a[2],D.home[0],D.home[1])/1000,1)):T.stay)))); }
     s=i; }
   el.innerHTML='<div class="st"><span>'+T.distance+'</span><b>'+dec(m/1000,1)+' km</b></div>'
     +(D.home?'<div class="st"><span>'+T.away+'</span><b>'+dauer(weg)+'</b></div>':'')

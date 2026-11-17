@@ -18,6 +18,8 @@ class XploraWatch extends IPSModule
     private const MIN_INTERVAL = 60;
     private const FIRST_UPDATE_DELAY = 5;
     private const MAX_ACCURACY_BONUS = 200;
+    private const COORDINATE_DIGITS = 7;
+    private const GEOCODER = 'https://nominatim.openstreetmap.org/search';
 
     private const STATUS_NO_WARD = 201;
     private const STATUS_REQUEST_FAILED = 202;
@@ -33,7 +35,12 @@ class XploraWatch extends IPSModule
         $this->RegisterPropertyInteger('LocateRequestAge', 0);
         $this->RegisterPropertyBoolean('UseSymconLocation', true);
         $this->RegisterPropertyString('HomeLocation', '{"latitude":0,"longitude":0}');
+        $this->RegisterPropertyString('HomeAddress', '');
         $this->RegisterPropertyInteger('HomeRadius', 150);
+        $this->RegisterPropertyString('Place2Address', '');
+        $this->RegisterPropertyString('Place2Name', '');
+        $this->RegisterPropertyString('Place2Location', '{"latitude":0,"longitude":0}');
+        $this->RegisterPropertyInteger('Place2Radius', 150);
         $this->RegisterPropertyBoolean('ShowMap', true);
         $this->RegisterPropertyBoolean('ShowTile', true);
         $this->RegisterPropertyBoolean('TileMap', true);
@@ -61,6 +68,16 @@ class XploraWatch extends IPSModule
         $this->MaintainVariable('Charging', $this->Translate('Charging'), VARIABLETYPE_BOOLEAN, '', 2, true);
         $this->MaintainVariable('AtHome', $this->Translate('At home'), VARIABLETYPE_BOOLEAN, '~Presence', 3, $home);
         $this->MaintainVariable('Distance', $this->Translate('Distance to home'), VARIABLETYPE_FLOAT, 'XPL.Kilometer', 4, $home);
+
+        // Second place (e.g. school, work, second home): variable names follow the configured name
+        $place2 = $this->GetPlace2() !== null;
+        $place2Name = $this->GetPlace2Name();
+        $this->MaintainVariable('AtPlace2', sprintf($this->Translate('At %s'), $place2Name), VARIABLETYPE_BOOLEAN, '~Presence', 4, $place2);
+        $this->MaintainVariable('DistancePlace2', sprintf($this->Translate('Distance to %s'), $place2Name), VARIABLETYPE_FLOAT, 'XPL.Kilometer', 4, $place2);
+        if ($place2) {
+            $this->SetNameIfChanged('AtPlace2', sprintf($this->Translate('At %s'), $place2Name));
+            $this->SetNameIfChanged('DistancePlace2', sprintf($this->Translate('Distance to %s'), $place2Name));
+        }
         $this->MaintainVariable('InSafeZone', $this->Translate('In safe zone'), VARIABLETYPE_BOOLEAN, '', 5, true);
         $this->MaintainVariable('SafeZone', $this->Translate('Safe zone'), VARIABLETYPE_STRING, '', 6, true);
         $this->MaintainVariable('Address', $this->Translate('Address'), VARIABLETYPE_STRING, '', 7, true);
@@ -172,6 +189,15 @@ class XploraWatch extends IPSModule
             $this->SetValueIfChanged('Distance', round($distance / 1000, 2));
             $this->SetValueIfChanged('AtHome', $atHome);
         }
+        $place2 = $this->GetPlace2();
+        $distance2 = null;
+        $atPlace2 = null;
+        if ($place2 !== null) {
+            $distance2 = $this->Distance($place2[0], $place2[1], $latitude, $longitude);
+            $atPlace2 = $distance2 <= $this->ReadPropertyInteger('Place2Radius') + min($accuracy, self::MAX_ACCURACY_BONUS);
+            $this->SetValueIfChanged('DistancePlace2', round($distance2 / 1000, 2));
+            $this->SetValueIfChanged('AtPlace2', $atPlace2);
+        }
         if ($this->ReadPropertyBoolean('ShowMap')) {
             $this->SetValueIfChanged('Map', $this->MapHTML($latitude, $longitude));
         }
@@ -184,6 +210,7 @@ class XploraWatch extends IPSModule
                 'charging' => (bool) ($location['isCharging'] ?? false),
                 'atHome'   => $atHome,
                 'distance' => $distance,
+                'atPlace2' => $atPlace2,
                 'zone'     => (bool) ($location['isInSafeZone'] ?? false) ? (string) ($location['safeZoneLabel'] ?? '') : '',
                 'time'     => $time,
                 'type'     => (string) ($location['locateType'] ?? ''),
@@ -211,6 +238,50 @@ class XploraWatch extends IPSModule
     }
 
     /**
+     * Button "Find": looks up an address (OpenStreetMap Nominatim) and writes the coordinates into the
+     * location field $Field of the configuration form (HomeLocation or Place2Location).
+     * The value is saved with "Apply changes". Returns a message for the user.
+     */
+    public function FindLocation(string $Field, string $Address): string
+    {
+        if (!in_array($Field, ['HomeLocation', 'Place2Location'], true)) {
+            return $this->Translate('Unknown location field');
+        }
+        $Address = trim($Address);
+        if ($Address === '') {
+            return $this->Translate('Please enter an address.');
+        }
+        $url = self::GEOCODER . '?' . http_build_query(['format' => 'jsonv2', 'limit' => 1, 'q' => $Address]);
+        $curl = curl_init($url);
+        curl_setopt_array($curl, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CONNECTTIMEOUT => 8,
+            CURLOPT_TIMEOUT        => 15,
+            // Nominatim requires an identifying User-Agent
+            CURLOPT_HTTPHEADER     => ['User-Agent: SymconXplora (+https://github.com/cbeham1/SymconXplora)', 'Accept-Language: ' . $this->Translate('en-US')],
+        ]);
+        $raw = curl_exec($curl);
+        $status = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $error = curl_error($curl);
+        curl_close($curl);
+        $this->SendDebug('FindLocation', 'HTTP ' . $status . ' ' . (is_string($raw) ? $raw : $error), 0);
+
+        $result = is_string($raw) && $status === 200 ? json_decode($raw, true) : null;
+        if (!is_array($result)) {
+            return $this->Translate('Address search failed') . ' (' . ($error !== '' ? $error : 'HTTP ' . $status) . ')';
+        }
+        if ($result === [] || !isset($result[0]['lat'], $result[0]['lon'])) {
+            return $this->Translate('Address not found');
+        }
+        $latitude = round((float) $result[0]['lat'], self::COORDINATE_DIGITS);
+        $longitude = round((float) $result[0]['lon'], self::COORDINATE_DIGITS);
+        $this->UpdateFormField($Field, 'value', json_encode(['latitude' => $latitude, 'longitude' => $longitude]));
+        return sprintf($this->Translate('Found: %s'), (string) ($result[0]['display_name'] ?? $Address)) . "\n"
+            . number_format($latitude, self::COORDINATE_DIGITS, '.', '') . ', ' . number_format($longitude, self::COORDINATE_DIGITS, '.', '') . "\n"
+            . $this->Translate('Please apply the changes to save the location.');
+    }
+
+    /**
      * Imports history points, e.g. from an earlier script.
      * $Points: JSON list of [timestamp, latitude, longitude, accuracy, type]; accuracy and type are optional.
      * Points are merged with the stored ones (same timestamp is kept once), sorted and limited to the history days.
@@ -228,7 +299,7 @@ class XploraWatch extends IPSModule
             if (!is_array($p) || !isset($p[0], $p[1], $p[2]) || (int) $p[0] <= 0) {
                 continue;
             }
-            $merged[(int) $p[0]] = [(int) $p[0], round((float) $p[1], 6), round((float) $p[2], 6), (int) ($p[3] ?? 0), (string) ($p[4] ?? '')];
+            $merged[(int) $p[0]] = [(int) $p[0], round((float) $p[1], self::COORDINATE_DIGITS), round((float) $p[2], self::COORDINATE_DIGITS), (int) ($p[3] ?? 0), (string) ($p[4] ?? '')];
         }
         ksort($merged);
         $limit = time() - max(1, $this->ReadPropertyInteger('HistoryDays')) * 86400;
@@ -254,6 +325,11 @@ class XploraWatch extends IPSModule
             'p'      => $points,
             'home'   => $this->GetHome(),
             'radius' => $this->ReadPropertyInteger('HomeRadius'),
+            'place2' => $this->GetPlace2() === null ? null : [
+                'pos'    => $this->GetPlace2(),
+                'radius' => $this->ReadPropertyInteger('Place2Radius'),
+                'name'   => $this->GetPlace2Name(),
+            ],
             'days'   => $days,
             'theme'  => $this->ReadPropertyInteger('TileTheme'),
             'lang'   => $this->Translate('en-US'),
@@ -326,6 +402,25 @@ class XploraWatch extends IPSModule
             $ids = IPS_GetInstanceListByModuleID(self::LOCATION_CONTROL);
             $json = $ids === [] ? '' : (string) IPS_GetProperty($ids[0], 'Location');
         }
+        return $this->ParseLocation($json);
+    }
+
+    /** Second place (e.g. school, work, second home) or null if not set. */
+    private function GetPlace2(): ?array
+    {
+        return $this->ParseLocation($this->ReadPropertyString('Place2Location'));
+    }
+
+    /** Name of the second place, "Second place" if no name is set. */
+    private function GetPlace2Name(): string
+    {
+        $name = trim($this->ReadPropertyString('Place2Name'));
+        return $name !== '' ? $name : $this->Translate('Second place');
+    }
+
+    /** SelectLocation JSON → [latitude, longitude] or null if empty / 0,0. */
+    private function ParseLocation(string $json): ?array
+    {
         $location = json_decode($json, true);
         if (!is_array($location) || !isset($location['latitude'], $location['longitude'])) {
             return null;
@@ -336,6 +431,15 @@ class XploraWatch extends IPSModule
             return null;
         }
         return [$latitude, $longitude];
+    }
+
+    /** Renames a variable of the instance when the configured name changed. */
+    private function SetNameIfChanged(string $ident, string $name): void
+    {
+        $id = @IPS_GetObjectIDByIdent($ident, $this->InstanceID);
+        if ($id !== false && IPS_GetName($id) !== $name) {
+            IPS_SetName($id, $name);
+        }
     }
 
     /** Great circle distance in meters. */
@@ -374,9 +478,13 @@ class XploraWatch extends IPSModule
         $warn = '#f5a623';
         $bad = '#e74c3c';
         $info = '#4aa3ff';
+        $place = '#9b6bdf';
         $dec = $this->Translate('.');
 
-        if ($d['atHome'] !== null) {
+        if ($d['atPlace2'] === true && $d['atHome'] !== true) {
+            $status = $this->GetPlace2Name();
+            $color = $place;
+        } elseif ($d['atHome'] !== null) {
             $status = $this->Translate($d['atHome'] ? 'At home' : 'On the way');
             $color = $d['atHome'] ? $ok : $warn;
         } else {
@@ -513,7 +621,7 @@ class XploraWatch extends IPSModule
         if ($last !== null && (int) $last[0] >= $time) {
             return;
         }
-        $points[] = [$time, round($latitude, 6), round($longitude, 6), $accuracy, $type];
+        $points[] = [$time, round($latitude, self::COORDINATE_DIGITS), round($longitude, self::COORDINATE_DIGITS), $accuracy, $type];
         $limit = time() - max(1, $this->ReadPropertyInteger('HistoryDays')) * 86400;
         $points = array_values(array_filter($points, static fn (array $p): bool => $p[0] >= $limit));
         $this->WriteAttributeString('History', json_encode($points));
@@ -574,8 +682,11 @@ class XploraWatch extends IPSModule
         }
         if (!IPS_VariableProfileExists('XPL.Degree')) {
             IPS_CreateVariableProfile('XPL.Degree', VARIABLETYPE_FLOAT);
-            IPS_SetVariableProfileDigits('XPL.Degree', 6);
             IPS_SetVariableProfileText('XPL.Degree', '', '°');
+        }
+        // Also updates profiles created by older versions (6 digits)
+        if (IPS_GetVariableProfile('XPL.Degree')['Digits'] !== self::COORDINATE_DIGITS) {
+            IPS_SetVariableProfileDigits('XPL.Degree', self::COORDINATE_DIGITS);
         }
         if (!IPS_VariableProfileExists('XPL.Meter')) {
             IPS_CreateVariableProfile('XPL.Meter', VARIABLETYPE_INTEGER);
