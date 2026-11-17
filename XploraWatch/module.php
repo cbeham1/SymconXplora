@@ -13,7 +13,9 @@ declare(strict_types=1);
 class XploraWatch extends IPSModule
 {
     private const DATA_TO_PARENT = '{690D7FA6-98B2-422C-A627-9FBFF58D1604}';
+    private const LOCATION_CONTROL = '{45E97A63-F870-408A-B259-2933F7EABF74}';
     private const MIN_INTERVAL = 60;
+    private const FIRST_UPDATE_DELAY = 5;
     private const MAX_ACCURACY_BONUS = 200;
 
     private const STATUS_NO_WARD = 201;
@@ -28,6 +30,7 @@ class XploraWatch extends IPSModule
         $this->RegisterPropertyString('WardID', '');
         $this->RegisterPropertyInteger('UpdateInterval', 300);
         $this->RegisterPropertyInteger('LocateRequestAge', 0);
+        $this->RegisterPropertyBoolean('UseSymconLocation', true);
         $this->RegisterPropertyString('HomeLocation', '{"latitude":0,"longitude":0}');
         $this->RegisterPropertyInteger('HomeRadius', 150);
         $this->RegisterPropertyBoolean('ShowMap', true);
@@ -63,13 +66,11 @@ class XploraWatch extends IPSModule
             $this->SetStatus(self::STATUS_NO_WARD);
             return;
         }
-        $this->SetTimerInterval('Update', max(self::MIN_INTERVAL, $this->ReadPropertyInteger('UpdateInterval')) * 1000);
         $this->SetStatus(IS_ACTIVE);
 
-        // Data flow is not available during kernel start; the timer will do the first update then
-        if (IPS_GetKernelRunlevel() === KR_READY && $this->HasActiveParent()) {
-            $this->Update();
-        }
+        // First update shortly after the changes are applied (not directly: during kernel start and while the
+        // configurator creates the instance the data flow may not be ready yet). Update() sets the regular interval.
+        $this->SetTimerInterval('Update', self::FIRST_UPDATE_DELAY * 1000);
     }
 
     public function ReceiveData($JSONString): string
@@ -82,7 +83,12 @@ class XploraWatch extends IPSModule
     public function Update(): bool
     {
         $wardID = $this->ReadPropertyString('WardID');
-        if ($wardID === '' || !$this->HasActiveParent()) {
+        if ($wardID === '') {
+            return false;
+        }
+        $this->SetTimerInterval('Update', max(self::MIN_INTERVAL, $this->ReadPropertyInteger('UpdateInterval')) * 1000);
+        if (!$this->HasActiveParent()) {
+            $this->SendDebug('Update', 'Cloud instance not active', 0);
             return false;
         }
         $location = $this->Request('GetLastLocation');
@@ -168,18 +174,26 @@ class XploraWatch extends IPSModule
 
     private function SetValueIfChanged(string $ident, $value): void
     {
-        if (@$this->GetIDForIdent($ident) === false) {
+        $id = @IPS_GetObjectIDByIdent($ident, $this->InstanceID);
+        if ($id === false) {
             return;
         }
-        if ($this->GetValue($ident) !== $value) {
+        // Write if changed, and once initially so that unchanged default values (e.g. false) get a timestamp
+        if ($this->GetValue($ident) !== $value || IPS_GetVariable($id)['VariableUpdated'] === 0) {
             $this->SetValue($ident, $value);
         }
     }
 
-    /** Home location from the configuration or null if not set. */
+    /** Home location (Symcon location or own setting) or null if not set. */
     private function GetHome(): ?array
     {
-        $location = json_decode($this->ReadPropertyString('HomeLocation'), true);
+        $json = $this->ReadPropertyString('HomeLocation');
+        if ($this->ReadPropertyBoolean('UseSymconLocation')) {
+            // Location of the project (Core instance "Location Control"), read only
+            $ids = IPS_GetInstanceListByModuleID(self::LOCATION_CONTROL);
+            $json = $ids === [] ? '' : (string) IPS_GetProperty($ids[0], 'Location');
+        }
+        $location = json_decode($json, true);
         if (!is_array($location) || !isset($location['latitude'], $location['longitude'])) {
             return null;
         }

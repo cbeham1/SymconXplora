@@ -42,7 +42,8 @@ Best via the Xplora Configurator. Manually: "Add instance" → "Xplora Watch" an
 | Watch ID                      | ID of the watch in the Xplora cloud (set by the configurator)                 |
 | Update interval               | Seconds between two requests (minimum 60, default 300)                         |
 | Request a new location …      | Minutes after which the watch is asked for a new location; 0 = never (default) |
-| Home location                 | Optional; creates "At home" and "Distance to home"                            |
+| Use the location of Symcon    | Uses the location of the Location Control as home (default on)                |
+| Own home location             | Used if the location of Symcon is not used                                     |
 | Home radius                   | Meters around the home location that count as home (default 150)             |
 | Create map variable           | HTML box with an OpenStreetMap map of the last location                        |
 | Update now                    | Reads the last location immediately                                           |

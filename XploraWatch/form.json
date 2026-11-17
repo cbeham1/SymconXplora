@@ -28,9 +28,14 @@
                     "caption": "Optional: with a home location the variables \"At home\" and \"Distance to home\" are created."
                 },
                 {
+                    "type": "CheckBox",
+                    "name": "UseSymconLocation",
+                    "caption": "Use the location of Symcon (Location Control)"
+                },
+                {
                     "type": "SelectLocation",
                     "name": "HomeLocation",
-                    "caption": "Home location"
+                    "caption": "Own home location (if the location of Symcon is not used)"
                 },
                 {
                     "type": "NumberSpinner",
