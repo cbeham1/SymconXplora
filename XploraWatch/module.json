@@ -1,0 +1,19 @@
+{
+    "id": "{DF4743D6-EF1E-4698-8F22-BE7930F405FE}",
+    "name": "Xplora Watch",
+    "type": 3,
+    "vendor": "Xplora",
+    "aliases": [
+        "Xplora Smartwatch",
+        "Xplora Kinderuhr"
+    ],
+    "url": "https://github.com/cbeham1/SymconXplora/blob/main/XploraWatch/README.md",
+    "parentRequirements": [
+        "{690D7FA6-98B2-422C-A627-9FBFF58D1604}"
+    ],
+    "childRequirements": [],
+    "implemented": [
+        "{B88FCB69-95A7-44D0-A133-BA0815445A44}"
+    ],
+    "prefix": "XPLW"
+}

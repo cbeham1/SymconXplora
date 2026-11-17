@@ -1,0 +1,12 @@
+{
+    "id": "{435BA3B2-7375-45A4-B5C7-41B0E607E61D}",
+    "author": "Christian Castillo-Beham",
+    "name": "Xplora",
+    "url": "https://github.com/cbeham1/SymconXplora",
+    "compatibility": {
+        "version": "7.0"
+    },
+    "version": "1.0",
+    "build": 1,
+    "date": 0
+}

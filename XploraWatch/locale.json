@@ -1,0 +1,34 @@
+{
+    "translations": {
+        "de": {
+            "Battery": "Akku",
+            "Charging": "Lädt",
+            "At home": "Zu Hause",
+            "Distance to home": "Abstand zu Hause",
+            "In safe zone": "In Sicherheitszone",
+            "Safe zone": "Sicherheitszone",
+            "Address": "Adresse",
+            "Latitude": "Breitengrad",
+            "Longitude": "Längengrad",
+            "Accuracy": "Genauigkeit",
+            "Location type": "Ortungsart",
+            "Location time": "Ortungszeit",
+            "Map": "Karte",
+            "No response from the cloud instance": "Keine Antwort von der Cloud-Instanz",
+            "Watch ID (set by the configurator)": "Uhren-ID (wird vom Konfigurator gesetzt)",
+            "Update interval": "Abfrageintervall",
+            "seconds": "Sekunden",
+            "Request a new location when the last one is older than (0 = never)": "Neue Ortung anfordern, wenn die letzte älter ist als (0 = nie)",
+            "minutes": "Minuten",
+            "Home": "Zuhause",
+            "Optional: with a home location the variables \"At home\" and \"Distance to home\" are created.": "Optional: Mit einem Standort für Zuhause werden die Variablen „Zu Hause“ und „Abstand zu Hause“ angelegt.",
+            "Home location": "Standort Zuhause",
+            "Home radius": "Radius Zuhause",
+            "Create map variable (OpenStreetMap)": "Kartenvariable anlegen (OpenStreetMap)",
+            "Update now": "Jetzt abfragen",
+            "Request location from watch": "Ortung bei der Uhr anfordern",
+            "No watch ID configured": "Keine Uhren-ID eingetragen",
+            "Request failed, see debug output and the cloud instance": "Abfrage fehlgeschlagen, siehe Debug-Ausgabe und Cloud-Instanz"
+        }
+    }
+}

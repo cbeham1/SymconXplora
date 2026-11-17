@@ -1,0 +1,74 @@
+{
+    "elements": [
+        {
+            "type": "ValidationTextBox",
+            "name": "WardID",
+            "caption": "Watch ID (set by the configurator)"
+        },
+        {
+            "type": "NumberSpinner",
+            "name": "UpdateInterval",
+            "caption": "Update interval",
+            "suffix": "seconds",
+            "minimum": 60
+        },
+        {
+            "type": "NumberSpinner",
+            "name": "LocateRequestAge",
+            "caption": "Request a new location when the last one is older than (0 = never)",
+            "suffix": "minutes",
+            "minimum": 0
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Home",
+            "items": [
+                {
+                    "type": "Label",
+                    "caption": "Optional: with a home location the variables \"At home\" and \"Distance to home\" are created."
+                },
+                {
+                    "type": "SelectLocation",
+                    "name": "HomeLocation",
+                    "caption": "Home location"
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "HomeRadius",
+                    "caption": "Home radius",
+                    "suffix": "m",
+                    "minimum": 0
+                }
+            ]
+        },
+        {
+            "type": "CheckBox",
+            "name": "ShowMap",
+            "caption": "Create map variable (OpenStreetMap)"
+        }
+    ],
+    "actions": [
+        {
+            "type": "Button",
+            "caption": "Update now",
+            "onClick": "XPLW_Update($id);"
+        },
+        {
+            "type": "Button",
+            "caption": "Request location from watch",
+            "onClick": "echo XPLW_RequestLocation($id) ? 'OK' : 'Error';"
+        }
+    ],
+    "status": [
+        {
+            "code": 201,
+            "icon": "inactive",
+            "caption": "No watch ID configured"
+        },
+        {
+            "code": 202,
+            "icon": "error",
+            "caption": "Request failed, see debug output and the cloud instance"
+        }
+    ]
+}

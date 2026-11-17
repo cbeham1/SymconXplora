@@ -1,0 +1,35 @@
+{
+    "elements": [],
+    "actions": [
+        {
+            "type": "Label",
+            "caption": "",
+            "visible": false
+        },
+        {
+            "type": "Configurator",
+            "name": "Watches",
+            "caption": "Watches",
+            "rowCount": 8,
+            "add": false,
+            "delete": true,
+            "sort": {
+                "column": "Name",
+                "direction": "ascending"
+            },
+            "columns": [
+                {
+                    "caption": "Name",
+                    "name": "Name",
+                    "width": "auto"
+                },
+                {
+                    "caption": "Watch ID",
+                    "name": "WardID",
+                    "width": "320px"
+                }
+            ],
+            "values": []
+        }
+    ]
+}

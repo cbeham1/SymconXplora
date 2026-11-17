@@ -1,0 +1,10 @@
+{
+    "translations": {
+        "de": {
+            "The Xplora Cloud instance is not active. Please check its login data.": "Die Xplora-Cloud-Instanz ist nicht aktiv. Bitte deren Zugangsdaten prüfen.",
+            "Watches": "Uhren",
+            "Name": "Name",
+            "Watch ID": "Uhren-ID"
+        }
+    }
+}

@@ -1,0 +1,73 @@
+{
+    "elements": [
+        {
+            "type": "Label",
+            "caption": "Login data of the Xplora parent app. Either e-mail address or country code and phone number."
+        },
+        {
+            "type": "ValidationTextBox",
+            "name": "Email",
+            "caption": "E-mail address"
+        },
+        {
+            "type": "RowLayout",
+            "items": [
+                {
+                    "type": "ValidationTextBox",
+                    "name": "CountryCode",
+                    "caption": "Country code",
+                    "width": "120px"
+                },
+                {
+                    "type": "ValidationTextBox",
+                    "name": "PhoneNumber",
+                    "caption": "Phone number (without leading 0)"
+                }
+            ]
+        },
+        {
+            "type": "PasswordTextBox",
+            "name": "Password",
+            "caption": "Password"
+        },
+        {
+            "type": "Select",
+            "name": "Language",
+            "caption": "Language",
+            "options": [
+                {
+                    "caption": "German",
+                    "value": "de-DE"
+                },
+                {
+                    "caption": "English",
+                    "value": "en-US"
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "type": "Button",
+            "caption": "Test connection",
+            "onClick": "echo XPLC_TestConnection($id);"
+        }
+    ],
+    "status": [
+        {
+            "code": 201,
+            "icon": "error",
+            "caption": "Login failed, please check the login data"
+        },
+        {
+            "code": 202,
+            "icon": "error",
+            "caption": "Throttled by Xplora, requests paused for one hour"
+        },
+        {
+            "code": 203,
+            "icon": "error",
+            "caption": "No connection to the Xplora cloud"
+        }
+    ]
+}

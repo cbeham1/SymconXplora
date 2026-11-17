@@ -1,0 +1,19 @@
+{
+    "id": "{C71DBF5D-F172-4659-A8F5-EB8C943ED849}",
+    "name": "Xplora Cloud",
+    "type": 1,
+    "vendor": "Xplora",
+    "aliases": [
+        "Xplora Account",
+        "Xplora Konto"
+    ],
+    "url": "https://github.com/cbeham1/SymconXplora/blob/main/XploraCloud/README.md",
+    "parentRequirements": [],
+    "childRequirements": [
+        "{B88FCB69-95A7-44D0-A133-BA0815445A44}"
+    ],
+    "implemented": [
+        "{690D7FA6-98B2-422C-A627-9FBFF58D1604}"
+    ],
+    "prefix": "XPLC"
+}

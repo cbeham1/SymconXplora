@@ -1,0 +1,18 @@
+{
+    "id": "{B24BD8FB-8208-4899-B003-81CDFFA229AA}",
+    "name": "Xplora Configurator",
+    "type": 4,
+    "vendor": "Xplora",
+    "aliases": [
+        "Xplora Konfigurator"
+    ],
+    "url": "https://github.com/cbeham1/SymconXplora/blob/main/XploraConfigurator/README.md",
+    "parentRequirements": [
+        "{690D7FA6-98B2-422C-A627-9FBFF58D1604}"
+    ],
+    "childRequirements": [],
+    "implemented": [
+        "{B88FCB69-95A7-44D0-A133-BA0815445A44}"
+    ],
+    "prefix": "XPLK"
+}

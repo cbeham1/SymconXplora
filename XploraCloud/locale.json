@@ -1,0 +1,31 @@
+{
+    "translations": {
+        "de": {
+            "Login data of the Xplora parent app. Either e-mail address or country code and phone number.": "Zugangsdaten der Xplora-Eltern-App. Entweder E-Mail-Adresse oder Ländervorwahl und Telefonnummer.",
+            "E-mail address": "E-Mail-Adresse",
+            "Country code": "Ländervorwahl",
+            "Phone number (without leading 0)": "Telefonnummer (ohne führende 0)",
+            "Password": "Passwort",
+            "Language": "Sprache",
+            "German": "Deutsch",
+            "English": "Englisch",
+            "Test connection": "Verbindung testen",
+            "Login failed, please check the login data": "Anmeldung fehlgeschlagen, bitte Zugangsdaten prüfen",
+            "Throttled by Xplora, requests paused for one hour": "Von Xplora gedrosselt, Abfragen für eine Stunde pausiert",
+            "No connection to the Xplora cloud": "Keine Verbindung zur Xplora-Cloud",
+            "Invalid request": "Ungültige Anfrage",
+            "Unknown function": "Unbekannte Funktion",
+            "Please enter e-mail address or phone number and password.": "Bitte E-Mail-Adresse oder Telefonnummer und Passwort eintragen.",
+            "Login failed": "Anmeldung fehlgeschlagen",
+            "Login successful": "Anmeldung erfolgreich",
+            "Watches": "Uhren",
+            "No watch ID configured": "Keine Uhren-ID eingetragen",
+            "No login data configured": "Keine Zugangsdaten eingetragen",
+            "Login rejected, please check the login data": "Anmeldung abgelehnt, bitte Zugangsdaten prüfen",
+            "Paused after throttling by Xplora until %s": "Nach Drosselung durch Xplora pausiert bis %s",
+            "Connection error": "Verbindungsfehler",
+            "Throttled by Xplora (HTTP 429)": "Von Xplora gedrosselt (HTTP 429)",
+            "Invalid response": "Ungültige Antwort"
+        }
+    }
+}
