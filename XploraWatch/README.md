@@ -23,6 +23,9 @@ Shows location, address, safe zone, battery and charging state of one Xplora wat
 * Optional: status tile for the tile visualization (at home / on the way, distance, battery, time of the location),
   with a light map of the location as background (Esri "Light Gray Canvas" map tiles – Esri, HERE, Garmin, © OpenStreetMap contributors – loaded by the browser of the viewer)
 * Optional: map (OpenStreetMap) as HTML box
+* Optional: location history (1–60 days) – map per day with date selection, replay, colored track, distance,
+  time away from home and stays; stored in the instance, page delivered by a WebHook `/hook/XploraWatch<InstanceID>`
+  protected by a random token (Leaflet from cdnjs, OpenStreetMap / Esri World Imagery)
 
 ### 2. Requirements
 
@@ -51,6 +54,8 @@ Best via the Xplora Configurator. Manually: "Add instance" → "Xplora Watch" an
 | Map as background             | Shows a map of the location behind the status tile (default on)                |
 | Design of the status tile     | Automatic (follows light/dark mode of the device), dark or light               |
 | Create map variable           | HTML box with an OpenStreetMap map of the last location                        |
+| Record location history       | Stores the locations and creates the HTML box "Location history" (default off) |
+| Keep history for              | Days the locations are kept (1–60, default 15)                                 |
 | Update now                    | Reads the last location immediately                                           |
 | Request location from watch   | Asks the watch to determine its location now                                   |
 
@@ -75,7 +80,12 @@ Xplora limits the number of requests. Short intervals and frequent location requ
 | LocateTime | Location time    | integer | ~UnixTimestamp |
 | Map        | Map              | string  | ~HTMLBox       |
 
-"At home" and "Distance to home" exist only with a home location, "Map" only if enabled.
+| History    | Location history | string  | ~HTMLBox       |
+
+"At home" and "Distance to home" exist only with a home location, "Map" and "Location history" only if enabled.
+
+With the location history enabled the module registers the WebHook `/hook/XploraWatch<InstanceID>` at the WebHook Control
+(removed again when the instance is deleted). The page only answers with the random token contained in the HTML box.
 
 Profiles created by the module: `XPL.Kilometer`, `XPL.Degree`, `XPL.Meter`.
 

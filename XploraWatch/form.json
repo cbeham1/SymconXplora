@@ -79,6 +79,29 @@
             "type": "CheckBox",
             "name": "ShowMap",
             "caption": "Create map variable (OpenStreetMap)"
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Location history",
+            "items": [
+                {
+                    "type": "Label",
+                    "caption": "Stores the locations in the instance and shows them per day on a map with replay. The page is delivered by a WebHook with a random token."
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "ShowHistory",
+                    "caption": "Record location history"
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "HistoryDays",
+                    "caption": "Keep history for",
+                    "suffix": "days",
+                    "minimum": 1,
+                    "maximum": 60
+                }
+            ]
         }
     ],
     "actions": [

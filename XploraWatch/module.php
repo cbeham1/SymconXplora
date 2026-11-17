@@ -14,6 +14,7 @@ class XploraWatch extends IPSModule
 {
     private const DATA_TO_PARENT = '{690D7FA6-98B2-422C-A627-9FBFF58D1604}';
     private const LOCATION_CONTROL = '{45E97A63-F870-408A-B259-2933F7EABF74}';
+    private const WEBHOOK_CONTROL = '{015A6EB8-D6E5-4B93-B496-0D3F77AE9FE1}';
     private const MIN_INTERVAL = 60;
     private const FIRST_UPDATE_DELAY = 5;
     private const MAX_ACCURACY_BONUS = 200;
@@ -37,6 +38,11 @@ class XploraWatch extends IPSModule
         $this->RegisterPropertyBoolean('ShowTile', true);
         $this->RegisterPropertyBoolean('TileMap', true);
         $this->RegisterPropertyInteger('TileTheme', 0);
+        $this->RegisterPropertyBoolean('ShowHistory', false);
+        $this->RegisterPropertyInteger('HistoryDays', 15);
+
+        $this->RegisterAttributeString('History', '[]');
+        $this->RegisterAttributeString('HookToken', '');
 
         $this->RegisterAttributeInteger('LastLocateRequest', 0);
 
@@ -64,6 +70,21 @@ class XploraWatch extends IPSModule
         $this->MaintainVariable('LocateType', $this->Translate('Location type'), VARIABLETYPE_STRING, '', 11, true);
         $this->MaintainVariable('LocateTime', $this->Translate('Location time'), VARIABLETYPE_INTEGER, '~UnixTimestamp', 12, true);
         $this->MaintainVariable('Map', $this->Translate('Map'), VARIABLETYPE_STRING, '~HTMLBox', 20, $this->ReadPropertyBoolean('ShowMap'));
+        $this->MaintainVariable('History', $this->Translate('Location history'), VARIABLETYPE_STRING, '~HTMLBox', 21, $this->ReadPropertyBoolean('ShowHistory'));
+
+        // Location history: page via WebHook, protected by a random token in the URL
+        if ($this->ReadPropertyBoolean('ShowHistory')) {
+            if ($this->ReadAttributeString('HookToken') === '') {
+                $this->WriteAttributeString('HookToken', bin2hex(random_bytes(16)));
+            }
+            if (IPS_GetKernelRunlevel() === KR_READY) {
+                $this->RegisterHook();
+            } else {
+                $this->RegisterMessage(0, IPS_KERNELSTARTED);
+            }
+            $this->SetValueIfChanged('History', '<iframe src="' . $this->HookPath() . '?t=' . $this->ReadAttributeString('HookToken')
+                . '" style="width:100%;height:100%;min-height:560px;border:0;border-radius:6px"></iframe>');
+        }
 
         if ($this->ReadPropertyString('WardID') === '') {
             $this->SetTimerInterval('Update', 0);
@@ -75,6 +96,21 @@ class XploraWatch extends IPSModule
         // First update shortly after the changes are applied (not directly: during kernel start and while the
         // configurator creates the instance the data flow may not be ready yet). Update() sets the regular interval.
         $this->SetTimerInterval('Update', self::FIRST_UPDATE_DELAY * 1000);
+    }
+
+    public function Destroy(): void
+    {
+        if (IPS_GetKernelRunlevel() === KR_READY) {
+            $this->UnregisterHook();
+        }
+        parent::Destroy();
+    }
+
+    public function MessageSink($TimeStamp, $SenderID, $Message, $Data): void
+    {
+        if ($Message === IPS_KERNELSTARTED && $this->ReadPropertyBoolean('ShowHistory')) {
+            $this->RegisterHook();
+        }
     }
 
     public function ReceiveData($JSONString): string
@@ -138,6 +174,9 @@ class XploraWatch extends IPSModule
         }
         if ($this->ReadPropertyBoolean('ShowMap')) {
             $this->SetValueIfChanged('Map', $this->MapHTML($latitude, $longitude));
+        }
+        if ($this->ReadPropertyBoolean('ShowHistory')) {
+            $this->AddHistoryPoint($time, $latitude, $longitude, $accuracy, (string) ($location['locateType'] ?? ''));
         }
         if ($this->ReadPropertyBoolean('ShowTile')) {
             $this->SetValueIfChanged('Tile', $this->TileHTML([
@@ -359,6 +398,106 @@ class XploraWatch extends IPSModule
             . $battery
             . '<div class="xl"><span>' . $e($this->Translate('Location')) . '</span><span>' . $e($when . ($d['type'] !== '' ? ' · ' . $d['type'] : '')) . '</span></div>'
             . '</div></div>';
+    }
+
+    /** WebHook: delivers the history page if the token matches. */
+    protected function ProcessHookData()
+    {
+        if (!$this->ReadPropertyBoolean('ShowHistory') || !hash_equals($this->ReadAttributeString('HookToken'), (string) ($_GET['t'] ?? ''))) {
+            http_response_code(404);
+            echo 'Not found';
+            return;
+        }
+        $days = max(1, $this->ReadPropertyInteger('HistoryDays'));
+        $points = array_values(array_filter(json_decode($this->ReadAttributeString('History'), true) ?: [],
+            static fn (array $p): bool => $p[0] >= time() - $days * 86400));
+        $data = [
+            'name'   => $this->GetWatchName(),
+            'p'      => $points,
+            'home'   => $this->GetHome(),
+            'radius' => $this->ReadPropertyInteger('HomeRadius'),
+            'days'   => $days,
+            'theme'  => $this->ReadPropertyInteger('TileTheme'),
+            'lang'   => $this->Translate('en-US'),
+            't'      => [
+                'today'      => $this->Translate('Today'),
+                'prev'       => $this->Translate('Previous day'),
+                'next'       => $this->Translate('Next day'),
+                'map'        => $this->Translate('Map'),
+                'satellite'  => $this->Translate('Satellite'),
+                'center'     => $this->Translate('Center'),
+                'play'       => $this->Translate('Replay'),
+                'empty'      => $this->Translate('No locations on this day'),
+                'distance'   => $this->Translate('Distance (straight line)'),
+                'away'       => $this->Translate('Away from home'),
+                'points'     => $this->Translate('Locations'),
+                'period'     => $this->Translate('Period'),
+                'stays'      => $this->Translate('Stays'),
+                'atHome'     => $this->Translate('at home'),
+                'kmFromHome' => $this->Translate('%s km from home'),
+                'stay'       => $this->Translate('stay'),
+            ],
+        ];
+        header('Content-Type: text/html; charset=utf-8');
+        header('Cache-Control: no-store');
+        echo str_replace('/*__DATA__*/null', json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG),
+            (string) file_get_contents(__DIR__ . '/history.html'));
+    }
+
+    /** Adds a location to the history (only new location times) and removes points older than the retention. */
+    private function AddHistoryPoint(int $time, float $latitude, float $longitude, int $accuracy, string $type): void
+    {
+        if ($time <= 0) {
+            return;
+        }
+        $points = json_decode($this->ReadAttributeString('History'), true) ?: [];
+        $last = $points === [] ? null : $points[count($points) - 1];
+        if ($last !== null && (int) $last[0] >= $time) {
+            return;
+        }
+        $points[] = [$time, round($latitude, 6), round($longitude, 6), $accuracy, $type];
+        $limit = time() - max(1, $this->ReadPropertyInteger('HistoryDays')) * 86400;
+        $points = array_values(array_filter($points, static fn (array $p): bool => $p[0] >= $limit));
+        $this->WriteAttributeString('History', json_encode($points));
+    }
+
+    private function HookPath(): string
+    {
+        return '/hook/XploraWatch' . $this->InstanceID;
+    }
+
+    /** Registers the WebHook of this instance at the WebHook Control. */
+    private function RegisterHook(): void
+    {
+        $ids = IPS_GetInstanceListByModuleID(self::WEBHOOK_CONTROL);
+        if ($ids === []) {
+            $this->LogMessage($this->Translate('WebHook Control not found, the location history is not available'), KL_WARNING);
+            return;
+        }
+        $hooks = json_decode(IPS_GetProperty($ids[0], 'Hooks'), true) ?: [];
+        foreach ($hooks as $hook) {
+            if ($hook['Hook'] === $this->HookPath() && $hook['TargetID'] === $this->InstanceID) {
+                return;
+            }
+        }
+        $hooks = array_values(array_filter($hooks, fn (array $hook): bool => $hook['Hook'] !== $this->HookPath()));
+        $hooks[] = ['Hook' => $this->HookPath(), 'TargetID' => $this->InstanceID];
+        IPS_SetProperty($ids[0], 'Hooks', json_encode($hooks));
+        IPS_ApplyChanges($ids[0]);
+    }
+
+    private function UnregisterHook(): void
+    {
+        $ids = IPS_GetInstanceListByModuleID(self::WEBHOOK_CONTROL);
+        if ($ids === []) {
+            return;
+        }
+        $hooks = json_decode(IPS_GetProperty($ids[0], 'Hooks'), true) ?: [];
+        $rest = array_values(array_filter($hooks, fn (array $hook): bool => $hook['Hook'] !== $this->HookPath()));
+        if (count($rest) !== count($hooks)) {
+            IPS_SetProperty($ids[0], 'Hooks', json_encode($rest));
+            IPS_ApplyChanges($ids[0]);
+        }
     }
 
     /** Name of the watch = instance name without a leading "Xplora ". */

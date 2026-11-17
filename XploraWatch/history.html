@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Xplora</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{--bg:#1d2126;--bar:#252a30;--line:#343a41;--fg:#e8edf2;--btn:#2f363d;--btnb:#444c55;--btnh:#3a424b;--tile:#2a3037;--sub:#9aa5b1;--txt:#c9d2db}
+@media (prefers-color-scheme: light){:root.auto{--bg:#f4f6f8;--bar:#ffffff;--line:#d9dee3;--fg:#1f2933;--btn:#eef1f4;--btnb:#cfd6dd;--btnh:#e2e7ec;--tile:#ffffff;--sub:#5b6672;--txt:#3e4a56}}
+:root.light{--bg:#f4f6f8;--bar:#ffffff;--line:#d9dee3;--fg:#1f2933;--btn:#eef1f4;--btnb:#cfd6dd;--btnh:#e2e7ec;--tile:#ffffff;--sub:#5b6672;--txt:#3e4a56}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:"Segoe UI",Arial,Helvetica,sans-serif;font-size:14px}
+#app{display:flex;flex-direction:column;height:100%}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;background:var(--bar);border-bottom:1px solid var(--line)}
+.bar.bot{border-top:1px solid var(--line);border-bottom:0}
+button,select,input[type=date]{background:var(--btn);color:var(--fg);border:1px solid var(--btnb);border-radius:8px;padding:6px 10px;font-size:14px;cursor:pointer}
+button:hover{background:var(--btnh)}
+button.on{background:#e08a00;border-color:#e08a00;color:#fff}
+.grp{display:flex;gap:4px}
+.sp{flex:1}
+#map{flex:1;min-height:300px}
+#slider{flex:1;min-width:160px;accent-color:#e08a00}
+#zeit{font-weight:bold;min-width:52px;text-align:center;font-size:16px}
+#stats{display:flex;flex-wrap:wrap;gap:8px;padding:8px 10px;background:var(--bg)}
+.st{background:var(--tile);border-radius:8px;padding:6px 10px}.st span{color:var(--sub);font-size:12px;display:block}.st b{font-size:16px}
+#stays{flex-basis:100%;color:var(--txt);font-size:13px;line-height:1.5}
+.leaflet-tooltip{font-size:12px}
+.mk{background:#e08a00;color:#fff;border:2px solid #fff;border-radius:50%;width:26px;height:26px;line-height:22px;text-align:center;font-weight:bold;box-shadow:0 0 6px rgba(0,0,0,.6)}
+.home{font-size:22px;line-height:22px;text-align:center}
+#leer{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);z-index:500;background:rgba(0,0,0,.7);color:#fff;padding:10px 16px;border-radius:8px;display:none}
+</style></head>
+<body><div id="app">
+<div class="bar">
+  <div class="grp"><button id="prev">◀</button><input type="date" id="datum"><button id="next">▶</button><button id="heute"></button></div>
+  <span class="sp"></span>
+  <div class="grp"><button id="lKarte" class="on"></button><button id="lSat"></button><button id="zentr"></button></div>
+</div>
+<div style="position:relative;flex:1;display:flex"><div id="map" style="flex:1"></div><div id="leer"></div></div>
+<div class="bar bot">
+  <button id="play">▶</button>
+  <select id="tempo"><option value="30">30×</option><option value="120" selected>120×</option><option value="600">600×</option><option value="1800">1800×</option></select>
+  <input type="range" id="slider" min="0" max="1" value="0" step="1">
+  <span id="zeit">--:--</span>
+</div>
+<div id="stats"></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+// D: {name, p:[[unixtime, lat, lng, accuracy_m, type], ...], home:[lat,lng]|null, radius, days, theme, lang, t:{...texts}}
+const D = /*__DATA__*/null;
+const T = D.t;
+document.documentElement.lang = D.lang;
+document.documentElement.className = ['auto', 'dark', 'light'][D.theme] || 'auto';
+const dec = (v, n) => v.toLocaleString(D.lang, {minimumFractionDigits: n, maximumFractionDigits: n});
+document.getElementById('leer').textContent = T.empty;
+document.getElementById('heute').textContent = T.today;
+document.getElementById('prev').title = T.prev;
+document.getElementById('next').title = T.next;
+document.getElementById('lKarte').textContent = T.map;
+document.getElementById('lSat').textContent = T.satellite;
+document.getElementById('zentr').textContent = '⌖ ' + T.center;
+document.getElementById('play').title = T.play;
+const store = { get(k){ try { return sessionStorage.getItem(k); } catch(e){ return null; } }, set(k,v){ try { sessionStorage.setItem(k,v); } catch(e){} } };
+const ymd = t => new Date(t*1000).toLocaleDateString('sv-SE');
+const hm = t => new Date(t*1000).toLocaleTimeString(D.lang,{hour:'2-digit',minute:'2-digit'});
+const heute = () => new Date().toLocaleDateString('sv-SE');
+function dist(a,b,c,d){const R=6371000,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r;const h=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));}
+function dauer(s){s=Math.round(s/60);const h=Math.floor(s/60),m=s%60;return h?h+' h '+String(m).padStart(2,'0')+' min':m+' min';}
+
+let tag = heute(), pts = [], cur = 0, timer = null;
+
+const map = L.map('map',{zoomControl:true});
+const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
+const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'});
+const satLbl = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19});
+let layer = store.get('xl') || 'karte';
+function setLayer(l){ layer=l; store.set('xl',l); [osm,sat,satLbl].forEach(x=>map.removeLayer(x));
+  if(l==='sat'){sat.addTo(map);satLbl.addTo(map);}else{osm.addTo(map);}
+  document.getElementById('lKarte').classList.toggle('on',l!=='sat'); document.getElementById('lSat').classList.toggle('on',l==='sat'); }
+setLayer(layer);
+
+const gStrecke = L.layerGroup().addTo(map), gPlay = L.layerGroup().addTo(map);
+if (D.home) L.marker(D.home,{icon:L.divIcon({className:'home',html:'🏠',iconSize:[24,24]}),interactive:false}).addTo(map);
+let mover = null, trail = null;
+
+function farbe(f){ return 'hsl('+(45-35*f)+',95%,'+(68-38*f)+'%)'; }
+
+function zeichne(fit){
+  stop(); gStrecke.clearLayers(); gPlay.clearLayers(); mover=null; trail=null;
+  pts = D.p.filter(p => ymd(p[0]) === tag).sort((a,b)=>a[0]-b[0]);
+  const di = document.getElementById('datum'); di.value = tag;
+  di.min = new Date(Date.now()-D.days*86400000).toLocaleDateString('sv-SE'); di.max = heute();
+  document.getElementById('leer').style.display = pts.length ? 'none' : 'block';
+  const sl = document.getElementById('slider');
+  if (!pts.length){ sl.min=0; sl.max=1; sl.value=0; document.getElementById('zeit').textContent='--:--'; statistik(); if(fit) zentriere(); return; }
+  for (let i=1;i<pts.length;i++){ const f=(i-1)/Math.max(1,pts.length-2);
+    L.polyline([[pts[i-1][1],pts[i-1][2]],[pts[i][1],pts[i][2]]],{color:farbe(f),weight:5,opacity:.9}).addTo(gStrecke); }
+  pts.forEach((p,i)=>{ const f=i/Math.max(1,pts.length-1);
+    L.circleMarker([p[1],p[2]],{radius:i===0||i===pts.length-1?7:4,color:'#fff',weight:i===0||i===pts.length-1?2:1,fillColor:farbe(f),fillOpacity:1})
+     .bindTooltip(hm(p[0])+(p[4]?' · '+p[4]:'')+(p[3]>0?' ±'+p[3]+' m':'')).addTo(gStrecke); });
+  sl.min=pts[0][0]; sl.max=pts[pts.length-1][0]; sl.value=sl.max; cur=+sl.max;
+  mover = L.marker([pts[pts.length-1][1],pts[pts.length-1][2]],{icon:L.divIcon({className:'',html:'<div class="mk">'+(D.name||'?').charAt(0)+'</div>',iconSize:[26,26],iconAnchor:[13,13]})}).addTo(gPlay);
+  trail = L.polyline([],{color:'#4aa3ff',weight:6,opacity:.85}).addTo(gPlay);
+  zeigeZeit(cur, false); statistik(); if (fit) zentriere();
+}
+
+function zentriere(){
+  if (pts.length){ const b=L.latLngBounds(pts.map(p=>[p[1],p[2]])); if(D.home && pts.some(p=>dist(p[1],p[2],D.home[0],D.home[1])<3000)) b.extend(D.home);
+    map.fitBounds(b,{padding:[30,30],maxZoom:17}); }
+  else if (D.home) map.setView(D.home,15);
+  else if (D.p.length) { const l=D.p[D.p.length-1]; map.setView([l[1],l[2]],15); }
+  else map.setView([48.2,16.37],7);
+}
+
+function posBei(t){
+  if (t<=pts[0][0]) return [pts[0][1],pts[0][2],0];
+  for (let i=1;i<pts.length;i++){ if (t<=pts[i][0]){ const a=pts[i-1],b=pts[i],f=(t-a[0])/Math.max(1,b[0]-a[0]);
+    return [a[1]+(b[1]-a[1])*f, a[2]+(b[2]-a[2])*f, i]; } }
+  const l=pts[pts.length-1]; return [l[1],l[2],pts.length];
+}
+
+function zeigeZeit(t, spur){
+  if (!pts.length) return;
+  const p=posBei(t); mover.setLatLng([p[0],p[1]]);
+  document.getElementById('zeit').textContent=hm(t);
+  mover.bindTooltip(hm(t),{permanent:true,direction:'top',offset:[0,-14]}).openTooltip();
+  if (trail){ const pfad=pts.slice(0,p[2]).map(q=>[q[1],q[2]]); pfad.push([p[0],p[1]]); trail.setLatLngs(spur?pfad:[]); }
+}
+
+function play(){
+  if (!pts.length) return;
+  const sl=document.getElementById('slider');
+  if (timer){ stop(); return; }
+  if (+sl.value >= +sl.max) sl.value = sl.min;
+  cur=+sl.value; document.getElementById('play').textContent='⏸';
+  timer=setInterval(()=>{ cur += (+document.getElementById('tempo').value)*0.1;
+    if (cur >= +sl.max){ cur=+sl.max; sl.value=cur; zeigeZeit(cur,true); stop(); return; }
+    sl.value=cur; zeigeZeit(cur,true);
+    if (!map.getBounds().pad(-0.1).contains(mover.getLatLng())) map.panTo(mover.getLatLng()); },100);
+}
+function stop(){ if(timer){clearInterval(timer);timer=null;} document.getElementById('play').textContent='▶'; }
+
+function statistik(){
+  const el=document.getElementById('stats');
+  if (!pts.length){ el.innerHTML=''; return; }
+  let m=0, weg=0;
+  const r = p => D.radius + Math.min(p[3]||0,200);
+  for (let i=1;i<pts.length;i++){ const a=pts[i-1],b=pts[i];
+    if ((a[3]||0)<=300 && (b[3]||0)<=300) m+=dist(a[1],a[2],b[1],b[2]);
+    if (D.home && dist(a[1],a[2],D.home[0],D.home[1])>r(a)) weg+=Math.min(b[0]-a[0],3600); }
+  // Stays: consecutive points within 150 m for at least 10 min
+  const st=[]; let s=0;
+  for (let i=1;i<=pts.length;i++){
+    if (i<pts.length && dist(pts[s][1],pts[s][2],pts[i][1],pts[i][2])<=150) continue;
+    const a=pts[s],b=pts[i-1]; if (b[0]-a[0]>=600){
+      const hz = D.home && dist(a[1],a[2],D.home[0],D.home[1])<=r(a);
+      st.push(hm(a[0])+'–'+hm(b[0])+' '+(hz?T.atHome:(D.home?T.kmFromHome.replace('%s',dec(dist(a[1],a[2],D.home[0],D.home[1])/1000,1)):T.stay))); }
+    s=i; }
+  el.innerHTML='<div class="st"><span>'+T.distance+'</span><b>'+dec(m/1000,1)+' km</b></div>'
+    +(D.home?'<div class="st"><span>'+T.away+'</span><b>'+dauer(weg)+'</b></div>':'')
+    +'<div class="st"><span>'+T.points+'</span><b>'+pts.length+'</b></div>'
+    +'<div class="st"><span>'+T.period+'</span><b>'+hm(pts[0][0])+'–'+hm(pts[pts.length-1][0])+'</b></div>'
+    +'<div id="stays">'+(st.length?'<b>'+T.stays+':</b> '+st.join(' · '):'')+'</div>';
+}
+
+function tagPlus(n){ const d=new Date(tag+'T12:00:00'); d.setDate(d.getDate()+n); const v=d.toLocaleDateString('sv-SE');
+  if (v>heute()) return; tag=v; zeichne(true); }
+document.getElementById('prev').onclick=()=>tagPlus(-1);
+document.getElementById('next').onclick=()=>tagPlus(1);
+document.getElementById('heute').onclick=()=>{tag=heute();zeichne(true);};
+document.getElementById('datum').onchange=e=>{ if(e.target.value){tag=e.target.value;zeichne(true);} };
+document.getElementById('lKarte').onclick=()=>setLayer('karte');
+document.getElementById('lSat').onclick=()=>setLayer('sat');
+document.getElementById('zentr').onclick=zentriere;
+document.getElementById('play').onclick=play;
+document.getElementById('slider').oninput=e=>{ stop(); cur=+e.target.value; zeigeZeit(cur,true); };
+zeichne(true);
+// The tile may not have its final size yet when the page starts
+setTimeout(()=>{ map.invalidateSize(); zentriere(); }, 300);
+window.addEventListener('resize', ()=>map.invalidateSize());
+// Reload every 5 minutes (new points) while today is shown and no replay is running
+setInterval(()=>{ if(!timer && tag===heute()) location.reload(); }, 300000);
+</script></body></html>
