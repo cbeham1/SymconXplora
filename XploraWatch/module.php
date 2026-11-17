@@ -208,6 +208,33 @@ class XploraWatch extends IPSModule
         return $this->Request('RequestLocation') !== null;
     }
 
+    /**
+     * Imports history points, e.g. from an earlier script.
+     * $Points: JSON list of [timestamp, latitude, longitude, accuracy, type]; accuracy and type are optional.
+     * Points are merged with the stored ones (same timestamp is kept once), sorted and limited to the history days.
+     * Returns the number of stored points afterwards.
+     */
+    public function ImportHistory(string $Points): int
+    {
+        $new = json_decode($Points, true);
+        if (!is_array($new)) {
+            return -1;
+        }
+        $stored = json_decode($this->ReadAttributeString('History'), true) ?: [];
+        $merged = [];
+        foreach (array_merge($stored, $new) as $p) {
+            if (!is_array($p) || !isset($p[0], $p[1], $p[2]) || (int) $p[0] <= 0) {
+                continue;
+            }
+            $merged[(int) $p[0]] = [(int) $p[0], round((float) $p[1], 6), round((float) $p[2], 6), (int) ($p[3] ?? 0), (string) ($p[4] ?? '')];
+        }
+        ksort($merged);
+        $limit = time() - max(1, $this->ReadPropertyInteger('HistoryDays')) * 86400;
+        $points = array_values(array_filter($merged, static fn (array $p): bool => $p[0] >= $limit));
+        $this->WriteAttributeString('History', json_encode($points));
+        return count($points);
+    }
+
     /** WebHook: delivers the history page if the token matches. */
     protected function ProcessHookData()
     {

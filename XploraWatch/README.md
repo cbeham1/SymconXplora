@@ -98,3 +98,8 @@ Reads the last location and updates the variables.
 Asks the watch to determine its location. The new location is available with one of the next updates.
 
 Example: `XPLW_RequestLocation(12345);`
+
+`int XPLW_ImportHistory(int $InstanceID, string $Points);`
+Imports location history points, e.g. from an earlier script. `$Points` is a JSON list of `[timestamp, latitude, longitude, accuracy, type]` (accuracy and type optional). Points are merged with the stored history, duplicates (same timestamp) are kept once, points older than the configured history days are dropped. Returns the number of stored points, -1 for invalid JSON.
+
+Example: `XPLW_ImportHistory(12345, '[[1763370000, 48.1, 13.5, 20, "GPS"]]');`
