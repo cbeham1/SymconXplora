@@ -419,7 +419,7 @@ class XploraWatch extends IPSModule
 
         $map = '';
         if ($this->ReadPropertyBoolean('TileMap')) {
-            // 3x3 tiles (zoom 15) of the Esri "Light/Dark Gray Canvas" maps (no key needed), shifted so that the location is at 50 % / 24 % of the tile
+            // 5x3 tiles (zoom 15) of the Esri "Light/Dark Gray Canvas" maps (no key needed), shifted so that the location is at 50 % / 24 % of the tile
             $zoom = 15;
             $n = 2 ** $zoom;
             $x = ($d['lng'] + 180) / 360 * $n;
@@ -427,7 +427,7 @@ class XploraWatch extends IPSModule
             $y = (1 - log(tan($latRad) + 1 / cos($latRad)) / M_PI) / 2 * $n;
             $tx = (int) floor($x);
             $ty = (int) floor($y);
-            $px = (int) round(256 + ($x - $tx) * 256);
+            $px = (int) round(512 + ($x - $tx) * 256);
             $py = (int) round(256 + ($y - $ty) * 256);
             // Theme 0 = automatic (prefers-color-scheme), 1 = dark, 2 = light; automatic contains both maps
             $theme = $this->ReadPropertyInteger('TileTheme');
@@ -440,7 +440,7 @@ class XploraWatch extends IPSModule
             foreach ($layers as $class => $layer) {
                 $images = '';
                 for ($j = -1; $j <= 1; $j++) {
-                    for ($i = -1; $i <= 1; $i++) {
+                    for ($i = -2; $i <= 2; $i++) {
                         $images .= '<img alt="" src="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/' . $layer . '/MapServer/tile/'
                             . $zoom . '/' . ($ty + $j) . '/' . ($tx + $i) . '">';
                     }
@@ -469,7 +469,7 @@ class XploraWatch extends IPSModule
             . '.xw{position:relative;height:100%;min-height:240px;box-sizing:border-box;container-type:size;border:1px solid var(--line);border-top:3px solid ' . $color . ';border-radius:12px;overflow:hidden;color:var(--fg);background:var(--card)}'
             . '.xw *{box-sizing:border-box}'
             . '.xm{position:absolute;inset:0;overflow:hidden}'
-            . '.xt{position:absolute;width:768px;height:768px;display:grid;grid-template-columns:repeat(3,256px)}'
+            . '.xt{position:absolute;width:1280px;height:768px;display:grid;grid-template-columns:repeat(5,256px)}'
             . '.xt img{width:256px;height:256px;display:block}'
             . '.xo{position:absolute;inset:0;background:linear-gradient(180deg,var(--o1) 0%,var(--o1) 22%,var(--o2) 42%,var(--o3) 58%)}'
             . '.xp{position:absolute;left:50%;top:24%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;border:2px solid #fff}'
