@@ -38,6 +38,22 @@
                     "caption": "Own home location (if the location of Symcon is not used)"
                 },
                 {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "ValidationTextBox",
+                            "name": "HomeAddress",
+                            "caption": "Address (street, town)",
+                            "width": "400px"
+                        },
+                        {
+                            "type": "Button",
+                            "caption": "Find",
+                            "onClick": "echo XPLW_FindLocation($id, 'HomeLocation', $HomeAddress);"
+                        }
+                    ]
+                },
+                {
                     "type": "NumberSpinner",
                     "name": "HomeRadius",
                     "caption": "Home radius",
@@ -63,6 +79,22 @@
                     "type": "SelectLocation",
                     "name": "Place2Location",
                     "caption": "Location of the second place"
+                },
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "ValidationTextBox",
+                            "name": "Place2Address",
+                            "caption": "Address (street, town)",
+                            "width": "400px"
+                        },
+                        {
+                            "type": "Button",
+                            "caption": "Find",
+                            "onClick": "echo XPLW_FindLocation($id, 'Place2Location', $Place2Address);"
+                        }
+                    ]
                 },
                 {
                     "type": "NumberSpinner",

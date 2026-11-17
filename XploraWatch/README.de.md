@@ -57,6 +57,7 @@ Tipp: Die Instanz „Xplora <Name>“ nennen, z. B. „Xplora Emil“ – Kachel
 | Neue Ortung anfordern, wenn … | Minuten, nach denen die Uhr um eine neue Ortung gebeten wird; 0 = nie (Standard) |
 | Standort von Symcon übernehmen | nutzt den Standort des Location Control als Zuhause (Standard an) |
 | Eigener Standort Zuhause | wenn der Standort von Symcon nicht übernommen wird |
+| Adresse + „Finden“ | sucht die Adresse (OpenStreetMap Nominatim) und trägt die Koordinaten (7 Nachkommastellen) in das Standortfeld darüber ein; danach „Änderungen übernehmen“. Gibt es beim zweiten Ort ebenso |
 | Radius Zuhause | Meter um Zuhause, die als „zu Hause“ gelten (Standard 150) |
 | Zweiter Ort: Name | z. B. Schule, Arbeit, 2. Heim (leer = „Zweiter Ort“) |
 | Zweiter Ort: Standort | Standort des zweiten Orts; leer = kein zweiter Ort |

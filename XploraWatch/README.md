@@ -53,6 +53,7 @@ Best via the Xplora Configurator. Manually: "Add instance" → "Xplora Watch" an
 | Request a new location …      | Minutes after which the watch is asked for a new location; 0 = never (default) |
 | Use the location of Symcon    | Uses the location of the Location Control as home (default on)                |
 | Own home location             | Used if the location of Symcon is not used                                     |
+| Address + "Find"              | Looks up the address (OpenStreetMap Nominatim) and fills in the coordinates (7 decimals) of the location field above; then apply the changes. Also available for the second place |
 | Home radius                   | Meters around the home location that count as home (default 150)             |
 | Second place: name            | e.g. School, Work, Second home (empty = "Second place")                        |
 | Second place: location        | Location of the second place; empty = no second place                          |
