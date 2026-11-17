@@ -59,6 +59,7 @@ Best via the Xplora Configurator. Manually: "Add instance" → "Xplora Watch" an
 | Second place: location        | Location of the second place; empty = no second place                          |
 | Second place: radius          | Meters around the second place (default 150, plus accuracy, max. 200 m)        |
 | Create status tile            | HTML box "Status tile" for the tile visualization (default on)                 |
+| Create mini tile              | Small HTML box "Mini tile" for a small tile: status (colored), battery, distance from home, age of the location (refreshed in the browser) and battery bar (default off) |
 | Map as background             | Shows a map of the location behind the status tile (default on)                |
 | Design of the status tile     | Automatic (follows light/dark mode of the device), dark or light               |
 | Create map variable           | HTML box with an OpenStreetMap map of the last location                        |
@@ -74,6 +75,7 @@ Xplora limits the number of requests. Short intervals and frequent location requ
 | Ident      | Name             | Type    | Profile        |
 | ---------- | ---------------- | ------- | -------------- |
 | Tile       | Status tile      | string  | ~HTMLBox       |
+| MiniTile | Mini tile       | string  | ~HTMLBox       |
 | Battery    | Battery          | integer | ~Battery.100   |
 | Charging   | Charging         | boolean |                |
 | AtHome     | At home          | boolean | ~Presence      |
