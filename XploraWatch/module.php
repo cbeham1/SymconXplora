@@ -36,6 +36,7 @@ class XploraWatch extends IPSModule
         $this->RegisterPropertyBoolean('ShowMap', true);
         $this->RegisterPropertyBoolean('ShowTile', true);
         $this->RegisterPropertyBoolean('TileMap', true);
+        $this->RegisterPropertyInteger('TileTheme', 0);
 
         $this->RegisterAttributeInteger('LastLocateRequest', 0);
 
@@ -285,7 +286,7 @@ class XploraWatch extends IPSModule
 
         $map = '';
         if ($this->ReadPropertyBoolean('TileMap')) {
-            // 3x3 tiles (zoom 15) of the Esri "Light Gray Canvas" map (no key needed), shifted so that the location is at 50 % / 30 % of the tile
+            // 3x3 tiles (zoom 15) of the Esri "Light/Dark Gray Canvas" maps (no key needed), shifted so that the location is at 50 % / 30 % of the tile
             $zoom = 15;
             $n = 2 ** $zoom;
             $x = ($d['lng'] + 180) / 360 * $n;
@@ -295,37 +296,60 @@ class XploraWatch extends IPSModule
             $ty = (int) floor($y);
             $px = (int) round(256 + ($x - $tx) * 256);
             $py = (int) round(256 + ($y - $ty) * 256);
-            $tiles = '';
-            for ($j = -1; $j <= 1; $j++) {
-                for ($i = -1; $i <= 1; $i++) {
-                    $tiles .= '<img alt="" src="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/'
-                        . $zoom . '/' . ($ty + $j) . '/' . ($tx + $i) . '">';
-                }
+            // Theme 0 = automatic (prefers-color-scheme), 1 = dark, 2 = light; automatic contains both maps
+            $theme = $this->ReadPropertyInteger('TileTheme');
+            $layers = ['d' => 'World_Dark_Gray_Base', 'l' => 'World_Light_Gray_Base'];
+            if ($theme === 1) {
+                unset($layers['l']);
+            } elseif ($theme === 2) {
+                unset($layers['d']);
             }
-            $map = '<div class="xm"><div class="xt" style="left:calc(50% - ' . $px . 'px);top:calc(30% - ' . $py . 'px)">' . $tiles . '</div></div>'
+            foreach ($layers as $class => $layer) {
+                $tiles = '';
+                for ($j = -1; $j <= 1; $j++) {
+                    for ($i = -1; $i <= 1; $i++) {
+                        $tiles .= '<img alt="" src="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/' . $layer . '/MapServer/tile/'
+                            . $zoom . '/' . ($ty + $j) . '/' . ($tx + $i) . '">';
+                    }
+                }
+                $map .= '<div class="xt ' . $class . '" style="left:calc(50% - ' . $px . 'px);top:calc(30% - ' . $py . 'px)">' . $tiles . '</div>';
+            }
+            $map = '<div class="xm">' . $map . '</div>'
                 . '<div class="xo"></div><div class="xp" style="background:' . $color . ';box-shadow:0 0 0 6px ' . $color . '55"></div>'
                 . '<div class="xa">Esri, HERE, Garmin, © OpenStreetMap</div>';
         }
         $icon = $map !== '' ? '' : '<svg class="xi" viewBox="0 0 24 24" style="stroke:' . $color . '"><rect x="6.5" y="6" width="11" height="12" rx="2.5"/>'
             . '<path d="M9 6l.6-3h4.8l.6 3M9 18l.6 3h4.8l.6-3M12 9.5V12l1.8 1.2"/></svg>';
 
+        // Colors of both themes as CSS variables
+        $dark = '--fg:#e9eef3;--name:#c9d2db;--sub:#9aa5b1;--track:rgba(255,255,255,.13);--att:#c9d2db;'
+            . '--o1:rgba(24,28,33,.15);--o2:rgba(24,28,33,.35);--o3:rgba(24,28,33,.9)';
+        $light = '--fg:#1f2933;--name:#3e4a56;--sub:#5b6672;--track:rgba(0,0,0,.1);--att:#333;'
+            . '--o1:rgba(255,255,255,.1);--o2:rgba(255,255,255,.35);--o3:rgba(255,255,255,.92)';
+        $theme = $this->ReadPropertyInteger('TileTheme');
+        $vars = $theme === 2 ? '.xw{' . $light . '}.xt.d{display:none}' : '.xw{' . $dark . '}.xt.l{display:none}';
+        if ($theme === 0) {
+            $vars .= '@media (prefers-color-scheme: light){.xw{' . $light . '}.xt.d{display:none}.xt.l{display:grid}}';
+        }
+
         $css = '<style>'
             . 'html,body{margin:0;height:100%;background:transparent;font-family:"Segoe UI",Arial,sans-serif}'
-            . '.xw{position:relative;height:100%;min-height:240px;box-sizing:border-box;border:1px solid ' . $color . '66;border-radius:12px;overflow:hidden;color:#e9eef3;background:' . $color . '12}'
+            . '.xw{position:relative;height:100%;min-height:240px;box-sizing:border-box;border:1px solid ' . $color . '66;border-radius:12px;overflow:hidden;color:var(--fg);background:' . $color . '12}'
             . '.xm{position:absolute;inset:0;overflow:hidden}'
             . '.xt{position:absolute;width:768px;height:768px;display:grid;grid-template-columns:repeat(3,256px)}'
             . '.xt img{width:256px;height:256px;display:block}'
-            . '.xo{position:absolute;inset:0;background:linear-gradient(180deg,rgba(24,28,33,.15) 0%,rgba(24,28,33,.35) 40%,rgba(24,28,33,.88) 70%)}'
+            . '.xo{position:absolute;inset:0;background:linear-gradient(180deg,var(--o1) 0%,var(--o2) 40%,var(--o3) 70%)}'
             . '.xp{position:absolute;left:50%;top:30%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;border:2px solid #fff}'
-            . '.xa{position:absolute;right:6px;top:4px;font-size:9px;color:#333;opacity:.7}'
+            . '.xa{position:absolute;right:6px;top:4px;font-size:9px;color:var(--att);opacity:.7}'
             . '.xc{position:relative;height:100%;box-sizing:border-box;padding:14px 16px;display:flex;flex-direction:column;align-items:center;justify-content:' . ($map !== '' ? 'flex-end' : 'center') . ';text-align:center}'
             . '.xi{width:46px;height:auto;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;margin-bottom:6px}'
-            . '.xn{font-size:19px;font-weight:bold;color:#c9d2db}'
+            . '.xn{font-size:19px;font-weight:bold;color:var(--name)}'
             . '.xs{font-size:34px;font-weight:bold;margin:2px 0;line-height:1.15}'
-            . '.xu{color:#9aa5b1;font-size:14px;margin-top:3px;min-height:18px}'
-            . '.xb{width:100%;height:12px;border-radius:6px;background:rgba(255,255,255,.13);overflow:hidden;margin-top:14px}'
+            . '.xu{color:var(--sub);font-size:14px;margin-top:3px;min-height:18px}'
+            . '.xb{width:100%;height:12px;border-radius:6px;background:var(--track);overflow:hidden;margin-top:14px}'
             . '.xb i{display:block;height:100%}'
-            . '.xl{width:100%;display:flex;justify-content:space-between;font-size:15px;color:#c9d2db;margin-top:6px}'
+            . '.xl{width:100%;display:flex;justify-content:space-between;font-size:15px;color:var(--name);margin-top:6px}'
+            . $vars
             . '</style>';
 
         return $css . '<div class="xw">' . $map . '<div class="xc">' . $icon

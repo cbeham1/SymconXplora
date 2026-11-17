@@ -54,7 +54,26 @@
         {
             "type": "CheckBox",
             "name": "TileMap",
-            "caption": "Light map of the location as background of the status tile (Esri)"
+            "caption": "Map of the location as background of the status tile (Esri)"
+        },
+        {
+            "type": "Select",
+            "name": "TileTheme",
+            "caption": "Design of the status tile",
+            "options": [
+                {
+                    "caption": "Automatic (light/dark mode of the device)",
+                    "value": 0
+                },
+                {
+                    "caption": "Dark",
+                    "value": 1
+                },
+                {
+                    "caption": "Light",
+                    "value": 2
+                }
+            ]
         },
         {
             "type": "CheckBox",

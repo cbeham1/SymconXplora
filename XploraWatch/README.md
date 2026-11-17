@@ -48,7 +48,8 @@ Best via the Xplora Configurator. Manually: "Add instance" → "Xplora Watch" an
 | Own home location             | Used if the location of Symcon is not used                                     |
 | Home radius                   | Meters around the home location that count as home (default 150)             |
 | Create status tile            | HTML box "Status tile" for the tile visualization (default on)                 |
-| Light map as background       | Shows a light map of the location behind the status tile (default on)          |
+| Map as background             | Shows a map of the location behind the status tile (default on)                |
+| Design of the status tile     | Automatic (follows light/dark mode of the device), dark or light               |
 | Create map variable           | HTML box with an OpenStreetMap map of the last location                        |
 | Update now                    | Reads the last location immediately                                           |
 | Request location from watch   | Asks the watch to determine its location now                                   |
