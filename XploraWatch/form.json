@@ -112,6 +112,11 @@
         },
         {
             "type": "CheckBox",
+            "name": "ShowMiniTile",
+            "caption": "Create mini tile (small HTML box: status, battery, distance, age of the location)"
+        },
+        {
+            "type": "CheckBox",
             "name": "TileMap",
             "caption": "Map of the location as background of the status tile (Esri)"
         },

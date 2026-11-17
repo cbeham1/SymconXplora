@@ -43,6 +43,7 @@ class XploraWatch extends IPSModule
         $this->RegisterPropertyInteger('Place2Radius', 150);
         $this->RegisterPropertyBoolean('ShowMap', true);
         $this->RegisterPropertyBoolean('ShowTile', true);
+        $this->RegisterPropertyBoolean('ShowMiniTile', false);
         $this->RegisterPropertyBoolean('TileMap', true);
         $this->RegisterPropertyInteger('TileTheme', 0);
         $this->RegisterPropertyBoolean('ShowHistory', false);
@@ -64,6 +65,7 @@ class XploraWatch extends IPSModule
         $home = $this->GetHome() !== null;
 
         $this->MaintainVariable('Tile', $this->Translate('Status tile'), VARIABLETYPE_STRING, '~HTMLBox', 0, $this->ReadPropertyBoolean('ShowTile'));
+        $this->MaintainVariable('MiniTile', $this->Translate('Mini tile'), VARIABLETYPE_STRING, '~HTMLBox', 0, $this->ReadPropertyBoolean('ShowMiniTile'));
         $this->MaintainVariable('Battery', $this->Translate('Battery'), VARIABLETYPE_INTEGER, '~Battery.100', 1, true);
         $this->MaintainVariable('Charging', $this->Translate('Charging'), VARIABLETYPE_BOOLEAN, '', 2, true);
         $this->MaintainVariable('AtHome', $this->Translate('At home'), VARIABLETYPE_BOOLEAN, '~Presence', 3, $home);
@@ -204,21 +206,25 @@ class XploraWatch extends IPSModule
         if ($this->ReadPropertyBoolean('ShowHistory')) {
             $this->AddHistoryPoint($time, $latitude, $longitude, $accuracy, (string) ($location['locateType'] ?? ''));
         }
+        $tileData = [
+            'battery'  => isset($location['battery']) ? max(0, min(100, (int) $location['battery'])) : null,
+            'charging' => (bool) ($location['isCharging'] ?? false),
+            'atHome'   => $atHome,
+            'distance' => $distance,
+            'atPlace2' => $atPlace2,
+            'zone'     => (bool) ($location['isInSafeZone'] ?? false) ? (string) ($location['safeZoneLabel'] ?? '') : '',
+            'time'     => $time,
+            'type'     => (string) ($location['locateType'] ?? ''),
+            'lat'      => $latitude,
+            'lng'      => $longitude,
+            'address'  => $address,
+            'accuracy' => $accuracy,
+        ];
         if ($this->ReadPropertyBoolean('ShowTile')) {
-            $this->SetValueIfChanged('Tile', $this->TileHTML([
-                'battery'  => isset($location['battery']) ? max(0, min(100, (int) $location['battery'])) : null,
-                'charging' => (bool) ($location['isCharging'] ?? false),
-                'atHome'   => $atHome,
-                'distance' => $distance,
-                'atPlace2' => $atPlace2,
-                'zone'     => (bool) ($location['isInSafeZone'] ?? false) ? (string) ($location['safeZoneLabel'] ?? '') : '',
-                'time'     => $time,
-                'type'     => (string) ($location['locateType'] ?? ''),
-                'lat'      => $latitude,
-                'lng'      => $longitude,
-                'address'  => $address,
-                'accuracy' => $accuracy,
-            ]));
+            $this->SetValueIfChanged('Tile', $this->TileHTML($tileData));
+        }
+        if ($this->ReadPropertyBoolean('ShowMiniTile')) {
+            $this->SetValueIfChanged('MiniTile', $this->MiniTileHTML($tileData));
         }
 
         // Ask the watch for a new location if the last one is too old (result arrives with a later update)
@@ -466,6 +472,100 @@ class XploraWatch extends IPSModule
             . 'src="https://www.openstreetmap.org/export/embed.html?bbox=' . $box . '&amp;layer=mapnik&amp;marker=' . $marker . '"></iframe>';
     }
 
+    /** Status text and color: second place (purple), at home (green), on the way (orange), located without home (blue). */
+    private function StatusInfo(array $d): array
+    {
+        if ($d['atPlace2'] === true && $d['atHome'] !== true) {
+            return [$this->GetPlace2Name(), '#9b6bdf'];
+        }
+        if ($d['atHome'] !== null) {
+            return [$this->Translate($d['atHome'] ? 'At home' : 'On the way'), $d['atHome'] ? '#2ecc71' : '#f5a623'];
+        }
+        return [$d['zone'] !== '' ? $d['zone'] : $this->Translate('Located'), '#4aa3ff'];
+    }
+
+    /**
+     * Mini tile for a small tile of the tile visualization: status (colored) and battery in the first line,
+     * distance from home and age of the location plus a battery bar in the second line.
+     * The age ("15 min ago") is refreshed in the browser every 30 seconds.
+     */
+    private function MiniTileHTML(array $d): string
+    {
+        $e = static fn (string $text): string => htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+        [$status, $color] = $this->StatusInfo($d);
+
+        $info = '';
+        if ($d['distance'] !== null && $d['atHome'] !== true) {
+            $info = $d['distance'] < 1000
+                ? sprintf('%d m', (int) round($d['distance']))
+                : number_format($d['distance'] / 1000, 1, $this->Translate('.'), '') . ' km';
+        }
+
+        $battery = '';
+        $bar = '';
+        if ($d['battery'] !== null) {
+            $bc = $d['battery'] <= 20 ? '#e74c3c' : ($d['battery'] <= 40 ? '#f5a623' : '#2ecc71');
+            $battery = '<b class="cb" style="color:' . $bc . '">' . ($d['charging'] ? '⚡' : '') . $d['battery'] . ' %</b>';
+            $bar = '<span class="cr"><span style="width:' . $d['battery'] . '%;background:' . $bc . '"></span></span>';
+        }
+
+        $texts = json_encode([
+            'now' => $this->Translate('just now'),
+            'min' => $this->Translate('%d min ago'),
+            'h'   => $this->Translate('%d h ago'),
+            'd'   => $this->Translate('%d d ago'),
+        ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG);
+
+        $dark = '--fg:#e8edf2;--sub:#9aa5b1;--track:rgba(255,255,255,.15)';
+        $light = '--fg:#1f2933;--sub:#5b6672;--track:rgba(0,0,0,.12)';
+        $theme = $this->ReadPropertyInteger('TileTheme');
+        $vars = '.cw{' . ($theme === 2 ? $light : $dark) . '}';
+        if ($theme === 0) {
+            $vars .= '@media (prefers-color-scheme: light){.cw{' . $light . '}}';
+        }
+
+        return '<style>'
+            . 'html,body{margin:0;height:100%;background:transparent;font-family:"Segoe UI",Arial,sans-serif;overflow:hidden}'
+            . '.cw{height:100%;box-sizing:border-box;container-type:size;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;color:var(--fg);padding:0 2px 2px}'
+            . '.cl{display:flex;justify-content:space-between;align-items:center;gap:8px;min-width:0}'
+            . '.cs{font-weight:bold;font-size:clamp(13px,min(13cqw,30cqh),24px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+            . '.cb{font-size:clamp(12px,min(11cqw,26cqh),20px);white-space:nowrap;flex:none}'
+            . '.ci{color:var(--sub);font-size:clamp(10px,min(8cqw,19cqh),14px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+            . '.cr{flex:none;width:clamp(30px,22cqw,60px);height:4px;border-radius:2px;background:var(--track);overflow:hidden}'
+            . '.cr span{display:block;height:100%;border-radius:2px}'
+            . $vars
+            . '</style>'
+            . '<div class="cw">'
+            . '<div class="cl"><span class="cs" style="color:' . $color . '">' . $e($status) . '</span>' . $battery . '</div>'
+            . '<div class="cl"><span class="ci" id="ci" data-info="' . $e($info) . '" data-ts="' . (int) $d['time'] . '">'
+            . $e(trim($info . ($info !== '' ? ' · ' : '') . $this->Age($d['time']))) . '</span>' . $bar . '</div>'
+            . '</div>'
+            . '<script>(function(){var T=' . $texts . ',el=document.getElementById("ci");'
+            . 'function age(t){var s=Math.floor(Date.now()/1000)-t;if(t<=0)return"";if(s<60)return T.now;if(s<3600)return T.min.replace("%d",Math.floor(s/60));'
+            . 'if(s<86400)return T.h.replace("%d",Math.floor(s/3600));return T.d.replace("%d",Math.floor(s/86400));}'
+            . 'function upd(){var i=el.getAttribute("data-info"),a=age(+el.getAttribute("data-ts"));el.textContent=i&&a?i+" · "+a:(i||a);}'
+            . 'upd();setInterval(upd,30000);})();</script>';
+    }
+
+    /** Age of a location as text, e.g. "15 min ago". */
+    private function Age(int $time): string
+    {
+        if ($time <= 0) {
+            return '';
+        }
+        $s = max(0, time() - $time);
+        if ($s < 60) {
+            return $this->Translate('just now');
+        }
+        if ($s < 3600) {
+            return sprintf($this->Translate('%d min ago'), intdiv($s, 60));
+        }
+        if ($s < 86400) {
+            return sprintf($this->Translate('%d h ago'), intdiv($s, 3600));
+        }
+        return sprintf($this->Translate('%d d ago'), intdiv($s, 86400));
+    }
+
     /**
      * Status tile (same look as other status tiles): header with watch name and status chip, battery ring,
      * status and distance, location time and accuracy, address; optional map of the location in the background.
@@ -477,20 +577,9 @@ class XploraWatch extends IPSModule
         $ok = '#2ecc71';
         $warn = '#f5a623';
         $bad = '#e74c3c';
-        $info = '#4aa3ff';
-        $place = '#9b6bdf';
         $dec = $this->Translate('.');
 
-        if ($d['atPlace2'] === true && $d['atHome'] !== true) {
-            $status = $this->GetPlace2Name();
-            $color = $place;
-        } elseif ($d['atHome'] !== null) {
-            $status = $this->Translate($d['atHome'] ? 'At home' : 'On the way');
-            $color = $d['atHome'] ? $ok : $warn;
-        } else {
-            $status = $d['zone'] !== '' ? $d['zone'] : $this->Translate('Located');
-            $color = $info;
-        }
+        [$status, $color] = $this->StatusInfo($d);
         $sub = '';
         if ($d['distance'] !== null && !$d['atHome']) {
             $sub = $d['distance'] < 1000
