@@ -63,7 +63,8 @@ Tipp: Die Instanz „Xplora <Name>“ nennen, z. B. „Xplora Emil“ – Kachel
 | Zweiter Ort: Standort | Standort des zweiten Orts; leer = kein zweiter Ort |
 | Zweiter Ort: Radius | Meter um den zweiten Ort (Standard 150, plus Genauigkeit der Ortung, max. 200 m Zuschlag) |
 | Statuskachel anlegen | HTML-Box „Statuskachel“ (Standard an) |
-| Mini-Kachel anlegen | kleine HTML-Box „Mini-Kachel“ für eine kleine Kachel: Status (farbig), Akku in %, Abstand von zu Hause, Alter der Ortung („vor 15 min“, aktualisiert sich im Browser) und Akkubalken (Standard aus) |
+| Ort statt „Unterwegs“ anzeigen | zeigt in Status- und Mini-Kachel unterwegs den Ort (Dorf/Stadt) der Ortung statt „Unterwegs“: von Xplora geliefert, sonst über OpenStreetMap Nominatim ermittelt (zwischengespeichert, neue Abfrage erst nach mehr als 300 m) (Standard an) |
+| Mini-Kachel anlegen | kleine HTML-Box „Mini-Kachel“ für eine kleine Kachel: Status (farbig), Akku in %, Abstand von zu Hause, Alter der Ortung („15 Min.“, aktualisiert sich im Browser; Abstand ohne Nachkommastellen, z. B. „12 km“) und Akkubalken (Standard aus) |
 | Karte als Hintergrund | Karte des Standorts hinter der Statuskachel (Standard an) |
 | Design der Statuskachel | Automatisch (Hell/Dunkel des Geräts), Dunkel, Hell – gilt auch für den Verlauf |
 | Kartenvariable anlegen | HTML-Box mit OpenStreetMap-Karte der letzten Ortung |
