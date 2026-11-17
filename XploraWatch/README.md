@@ -1,5 +1,7 @@
 # Xplora Watch
 
+[Deutsche Anleitung](README.de.md)
+
 Shows location, address, safe zone, battery and charging state of one Xplora watch.
 
 ### Table of contents

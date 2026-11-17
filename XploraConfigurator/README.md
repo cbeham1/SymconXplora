@@ -1,5 +1,7 @@
 # Xplora Configurator
 
+[Deutsche Anleitung](README.de.md)
+
 Lists the watches of the Xplora account of the connected Xplora Cloud instance and creates an Xplora Watch instance for each watch on request.
 
 ### Table of contents

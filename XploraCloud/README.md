@@ -1,5 +1,7 @@
 # Xplora Cloud
 
+[Deutsche Anleitung](README.de.md)
+
 Holds the login to an Xplora parent account and forwards the requests of the Xplora Watch and Xplora Configurator instances to the Xplora cloud.
 
 ### Table of contents

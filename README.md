@@ -1,5 +1,7 @@
 # Xplora
 
+[Deutsche Anleitung](README.de.md)
+
 Integration of Xplora kids smartwatches via the Xplora cloud (the same service the Xplora parent app uses).
 
 The Xplora API is not officially documented. This library uses the same requests as the open source projects
