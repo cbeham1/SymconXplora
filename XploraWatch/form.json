@@ -48,6 +48,16 @@
         },
         {
             "type": "CheckBox",
+            "name": "ShowTile",
+            "caption": "Create status tile (HTML box for the tile visualization)"
+        },
+        {
+            "type": "CheckBox",
+            "name": "TileMap",
+            "caption": "Light map of the location as background of the status tile (Esri)"
+        },
+        {
+            "type": "CheckBox",
             "name": "ShowMap",
             "caption": "Create map variable (OpenStreetMap)"
         }

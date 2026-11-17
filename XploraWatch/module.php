@@ -34,6 +34,8 @@ class XploraWatch extends IPSModule
         $this->RegisterPropertyString('HomeLocation', '{"latitude":0,"longitude":0}');
         $this->RegisterPropertyInteger('HomeRadius', 150);
         $this->RegisterPropertyBoolean('ShowMap', true);
+        $this->RegisterPropertyBoolean('ShowTile', true);
+        $this->RegisterPropertyBoolean('TileMap', true);
 
         $this->RegisterAttributeInteger('LastLocateRequest', 0);
 
@@ -47,6 +49,7 @@ class XploraWatch extends IPSModule
         $this->RegisterProfiles();
         $home = $this->GetHome() !== null;
 
+        $this->MaintainVariable('Tile', $this->Translate('Status tile'), VARIABLETYPE_STRING, '~HTMLBox', 0, $this->ReadPropertyBoolean('ShowTile'));
         $this->MaintainVariable('Battery', $this->Translate('Battery'), VARIABLETYPE_INTEGER, '~Battery.100', 1, true);
         $this->MaintainVariable('Charging', $this->Translate('Charging'), VARIABLETYPE_BOOLEAN, '', 2, true);
         $this->MaintainVariable('AtHome', $this->Translate('At home'), VARIABLETYPE_BOOLEAN, '~Presence', 3, $home);
@@ -124,13 +127,29 @@ class XploraWatch extends IPSModule
         $this->SetValueIfChanged('SafeZone', (string) ($location['safeZoneLabel'] ?? ''));
 
         $home = $this->GetHome();
+        $distance = null;
+        $atHome = null;
         if ($home !== null) {
             $distance = $this->Distance($home[0], $home[1], $latitude, $longitude);
+            $atHome = $distance <= $this->ReadPropertyInteger('HomeRadius') + min($accuracy, self::MAX_ACCURACY_BONUS);
             $this->SetValueIfChanged('Distance', round($distance / 1000, 2));
-            $this->SetValueIfChanged('AtHome', $distance <= $this->ReadPropertyInteger('HomeRadius') + min($accuracy, self::MAX_ACCURACY_BONUS));
+            $this->SetValueIfChanged('AtHome', $atHome);
         }
         if ($this->ReadPropertyBoolean('ShowMap')) {
             $this->SetValueIfChanged('Map', $this->MapHTML($latitude, $longitude));
+        }
+        if ($this->ReadPropertyBoolean('ShowTile')) {
+            $this->SetValueIfChanged('Tile', $this->TileHTML([
+                'battery'  => isset($location['battery']) ? max(0, min(100, (int) $location['battery'])) : null,
+                'charging' => (bool) ($location['isCharging'] ?? false),
+                'atHome'   => $atHome,
+                'distance' => $distance,
+                'zone'     => (bool) ($location['isInSafeZone'] ?? false) ? (string) ($location['safeZoneLabel'] ?? '') : '',
+                'time'     => $time,
+                'type'     => (string) ($location['locateType'] ?? ''),
+                'lat'      => $latitude,
+                'lng'      => $longitude,
+            ]));
         }
 
         // Ask the watch for a new location if the last one is too old (result arrives with a later update)
@@ -227,6 +246,101 @@ class XploraWatch extends IPSModule
         $marker = sprintf('%.6F,%.6F', $latitude, $longitude);
         return '<iframe style="width:100%;height:100%;min-height:400px;border:0" loading="lazy" referrerpolicy="no-referrer" '
             . 'src="https://www.openstreetmap.org/export/embed.html?bbox=' . $box . '&amp;layer=mapnik&amp;marker=' . $marker . '"></iframe>';
+    }
+
+    /** Status tile: at home / on the way, distance, battery, last location; optional light map of the location as background. */
+    private function TileHTML(array $d): string
+    {
+        $e = static fn (string $text): string => htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+        $ok = '#2ecc71';
+        $warn = '#f5a623';
+        $bad = '#e74c3c';
+        $info = '#4aa3ff';
+
+        if ($d['atHome'] !== null) {
+            $status = $this->Translate($d['atHome'] ? 'At home' : 'On the way');
+            $color = $d['atHome'] ? $ok : $warn;
+        } else {
+            $status = $d['zone'] !== '' ? $d['zone'] : $this->Translate('Located');
+            $color = $info;
+        }
+        $sub = [];
+        if ($d['distance'] !== null && !$d['atHome']) {
+            $sub[] = $d['distance'] < 1000
+                ? sprintf($this->Translate('%d m away'), (int) round($d['distance']))
+                : sprintf($this->Translate('%s km away'), number_format($d['distance'] / 1000, 1, $this->Translate('.'), ''));
+        }
+        if ($d['zone'] !== '' && $d['atHome'] !== null) {
+            $sub[] = $d['zone'];
+        }
+        $when = $d['time'] <= 0 ? '–' : (date('Ymd', $d['time']) === date('Ymd') ? date('H:i', $d['time']) : date('d.m. H:i', $d['time']));
+
+        $battery = '';
+        if ($d['battery'] !== null) {
+            $bc = $d['battery'] <= 20 ? $bad : ($d['battery'] <= 40 ? $warn : $ok);
+            $battery = '<div class="xb"><i style="width:' . $d['battery'] . '%;background:' . $bc . '"></i></div>'
+                . '<div class="xl"><span>' . $e($this->Translate('Battery')) . '</span><b style="color:' . $bc . '">'
+                . $d['battery'] . ' %' . ($d['charging'] ? ' ⚡' : '') . '</b></div>';
+        }
+
+        $map = '';
+        if ($this->ReadPropertyBoolean('TileMap')) {
+            // 3x3 tiles (zoom 15) of the Esri "Light Gray Canvas" map (no key needed), shifted so that the location is at 50 % / 30 % of the tile
+            $zoom = 15;
+            $n = 2 ** $zoom;
+            $x = ($d['lng'] + 180) / 360 * $n;
+            $latRad = deg2rad($d['lat']);
+            $y = (1 - log(tan($latRad) + 1 / cos($latRad)) / M_PI) / 2 * $n;
+            $tx = (int) floor($x);
+            $ty = (int) floor($y);
+            $px = (int) round(256 + ($x - $tx) * 256);
+            $py = (int) round(256 + ($y - $ty) * 256);
+            $tiles = '';
+            for ($j = -1; $j <= 1; $j++) {
+                for ($i = -1; $i <= 1; $i++) {
+                    $tiles .= '<img alt="" src="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/'
+                        . $zoom . '/' . ($ty + $j) . '/' . ($tx + $i) . '">';
+                }
+            }
+            $map = '<div class="xm"><div class="xt" style="left:calc(50% - ' . $px . 'px);top:calc(30% - ' . $py . 'px)">' . $tiles . '</div></div>'
+                . '<div class="xo"></div><div class="xp" style="background:' . $color . ';box-shadow:0 0 0 6px ' . $color . '55"></div>'
+                . '<div class="xa">Esri, HERE, Garmin, © OpenStreetMap</div>';
+        }
+        $icon = $map !== '' ? '' : '<svg class="xi" viewBox="0 0 24 24" style="stroke:' . $color . '"><rect x="6.5" y="6" width="11" height="12" rx="2.5"/>'
+            . '<path d="M9 6l.6-3h4.8l.6 3M9 18l.6 3h4.8l.6-3M12 9.5V12l1.8 1.2"/></svg>';
+
+        $css = '<style>'
+            . 'html,body{margin:0;height:100%;background:transparent;font-family:"Segoe UI",Arial,sans-serif}'
+            . '.xw{position:relative;height:100%;min-height:240px;box-sizing:border-box;border:1px solid ' . $color . '66;border-radius:12px;overflow:hidden;color:#e9eef3;background:' . $color . '12}'
+            . '.xm{position:absolute;inset:0;overflow:hidden}'
+            . '.xt{position:absolute;width:768px;height:768px;display:grid;grid-template-columns:repeat(3,256px)}'
+            . '.xt img{width:256px;height:256px;display:block}'
+            . '.xo{position:absolute;inset:0;background:linear-gradient(180deg,rgba(24,28,33,.15) 0%,rgba(24,28,33,.35) 40%,rgba(24,28,33,.88) 70%)}'
+            . '.xp{position:absolute;left:50%;top:30%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;border:2px solid #fff}'
+            . '.xa{position:absolute;right:6px;top:4px;font-size:9px;color:#333;opacity:.7}'
+            . '.xc{position:relative;height:100%;box-sizing:border-box;padding:14px 16px;display:flex;flex-direction:column;align-items:center;justify-content:' . ($map !== '' ? 'flex-end' : 'center') . ';text-align:center}'
+            . '.xi{width:46px;height:auto;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;margin-bottom:6px}'
+            . '.xn{font-size:19px;font-weight:bold;color:#c9d2db}'
+            . '.xs{font-size:34px;font-weight:bold;margin:2px 0;line-height:1.15}'
+            . '.xu{color:#9aa5b1;font-size:14px;margin-top:3px;min-height:18px}'
+            . '.xb{width:100%;height:12px;border-radius:6px;background:rgba(255,255,255,.13);overflow:hidden;margin-top:14px}'
+            . '.xb i{display:block;height:100%}'
+            . '.xl{width:100%;display:flex;justify-content:space-between;font-size:15px;color:#c9d2db;margin-top:6px}'
+            . '</style>';
+
+        return $css . '<div class="xw">' . $map . '<div class="xc">' . $icon
+            . '<div class="xn">' . $e($this->GetWatchName()) . '</div>'
+            . '<div class="xs" style="color:' . $color . '">' . $e($status) . '</div>'
+            . '<div class="xu">' . $e(implode(' · ', $sub)) . '</div>'
+            . $battery
+            . '<div class="xl"><span>' . $e($this->Translate('Location')) . '</span><span>' . $e($when . ($d['type'] !== '' ? ' · ' . $d['type'] : '')) . '</span></div>'
+            . '</div></div>';
+    }
+
+    /** Name of the watch = instance name without a leading "Xplora ". */
+    private function GetWatchName(): string
+    {
+        return (string) preg_replace('/^Xplora\s+/u', '', IPS_GetName($this->InstanceID));
     }
 
     private function RegisterProfiles(): void

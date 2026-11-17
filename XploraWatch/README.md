@@ -20,6 +20,8 @@ Shows location, address, safe zone, battery and charging state of one Xplora wat
 * Safe zone of the Xplora app the watch is in
 * Optional: distance to a home location and "At home" (home radius plus accuracy of the location, max. 200 m)
 * Optional: asks the watch for a new location if the last one is too old (costs some battery of the watch)
+* Optional: status tile for the tile visualization (at home / on the way, distance, battery, time of the location),
+  with a light map of the location as background (Esri "Light Gray Canvas" map tiles – Esri, HERE, Garmin, © OpenStreetMap contributors – loaded by the browser of the viewer)
 * Optional: map (OpenStreetMap) as HTML box
 
 ### 2. Requirements
@@ -45,6 +47,8 @@ Best via the Xplora Configurator. Manually: "Add instance" → "Xplora Watch" an
 | Use the location of Symcon    | Uses the location of the Location Control as home (default on)                |
 | Own home location             | Used if the location of Symcon is not used                                     |
 | Home radius                   | Meters around the home location that count as home (default 150)             |
+| Create status tile            | HTML box "Status tile" for the tile visualization (default on)                 |
+| Light map as background       | Shows a light map of the location behind the status tile (default on)          |
 | Create map variable           | HTML box with an OpenStreetMap map of the last location                        |
 | Update now                    | Reads the last location immediately                                           |
 | Request location from watch   | Asks the watch to determine its location now                                   |
@@ -55,6 +59,7 @@ Xplora limits the number of requests. Short intervals and frequent location requ
 
 | Ident      | Name             | Type    | Profile        |
 | ---------- | ---------------- | ------- | -------------- |
+| Tile       | Status tile      | string  | ~HTMLBox       |
 | Battery    | Battery          | integer | ~Battery.100   |
 | Charging   | Charging         | boolean |                |
 | AtHome     | At home          | boolean | ~Presence      |
