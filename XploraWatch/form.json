@@ -47,6 +47,33 @@
             ]
         },
         {
+            "type": "ExpansionPanel",
+            "caption": "Second place",
+            "items": [
+                {
+                    "type": "Label",
+                    "caption": "Optional: a second place such as school, work or a second home. With a location the variables \"At <name>\" and \"Distance to <name>\" are created."
+                },
+                {
+                    "type": "ValidationTextBox",
+                    "name": "Place2Name",
+                    "caption": "Name (e.g. School, Work, Second home)"
+                },
+                {
+                    "type": "SelectLocation",
+                    "name": "Place2Location",
+                    "caption": "Location of the second place"
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "Place2Radius",
+                    "caption": "Radius of the second place",
+                    "suffix": "m",
+                    "minimum": 0
+                }
+            ]
+        },
+        {
             "type": "CheckBox",
             "name": "ShowTile",
             "caption": "Create status tile (HTML box for the tile visualization)"

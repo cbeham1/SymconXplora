@@ -34,6 +34,9 @@ class XploraWatch extends IPSModule
         $this->RegisterPropertyBoolean('UseSymconLocation', true);
         $this->RegisterPropertyString('HomeLocation', '{"latitude":0,"longitude":0}');
         $this->RegisterPropertyInteger('HomeRadius', 150);
+        $this->RegisterPropertyString('Place2Name', '');
+        $this->RegisterPropertyString('Place2Location', '{"latitude":0,"longitude":0}');
+        $this->RegisterPropertyInteger('Place2Radius', 150);
         $this->RegisterPropertyBoolean('ShowMap', true);
         $this->RegisterPropertyBoolean('ShowTile', true);
         $this->RegisterPropertyBoolean('TileMap', true);
@@ -61,6 +64,16 @@ class XploraWatch extends IPSModule
         $this->MaintainVariable('Charging', $this->Translate('Charging'), VARIABLETYPE_BOOLEAN, '', 2, true);
         $this->MaintainVariable('AtHome', $this->Translate('At home'), VARIABLETYPE_BOOLEAN, '~Presence', 3, $home);
         $this->MaintainVariable('Distance', $this->Translate('Distance to home'), VARIABLETYPE_FLOAT, 'XPL.Kilometer', 4, $home);
+
+        // Second place (e.g. school, work, second home): variable names follow the configured name
+        $place2 = $this->GetPlace2() !== null;
+        $place2Name = $this->GetPlace2Name();
+        $this->MaintainVariable('AtPlace2', sprintf($this->Translate('At %s'), $place2Name), VARIABLETYPE_BOOLEAN, '~Presence', 4, $place2);
+        $this->MaintainVariable('DistancePlace2', sprintf($this->Translate('Distance to %s'), $place2Name), VARIABLETYPE_FLOAT, 'XPL.Kilometer', 4, $place2);
+        if ($place2) {
+            $this->SetNameIfChanged('AtPlace2', sprintf($this->Translate('At %s'), $place2Name));
+            $this->SetNameIfChanged('DistancePlace2', sprintf($this->Translate('Distance to %s'), $place2Name));
+        }
         $this->MaintainVariable('InSafeZone', $this->Translate('In safe zone'), VARIABLETYPE_BOOLEAN, '', 5, true);
         $this->MaintainVariable('SafeZone', $this->Translate('Safe zone'), VARIABLETYPE_STRING, '', 6, true);
         $this->MaintainVariable('Address', $this->Translate('Address'), VARIABLETYPE_STRING, '', 7, true);
@@ -172,6 +185,15 @@ class XploraWatch extends IPSModule
             $this->SetValueIfChanged('Distance', round($distance / 1000, 2));
             $this->SetValueIfChanged('AtHome', $atHome);
         }
+        $place2 = $this->GetPlace2();
+        $distance2 = null;
+        $atPlace2 = null;
+        if ($place2 !== null) {
+            $distance2 = $this->Distance($place2[0], $place2[1], $latitude, $longitude);
+            $atPlace2 = $distance2 <= $this->ReadPropertyInteger('Place2Radius') + min($accuracy, self::MAX_ACCURACY_BONUS);
+            $this->SetValueIfChanged('DistancePlace2', round($distance2 / 1000, 2));
+            $this->SetValueIfChanged('AtPlace2', $atPlace2);
+        }
         if ($this->ReadPropertyBoolean('ShowMap')) {
             $this->SetValueIfChanged('Map', $this->MapHTML($latitude, $longitude));
         }
@@ -184,6 +206,7 @@ class XploraWatch extends IPSModule
                 'charging' => (bool) ($location['isCharging'] ?? false),
                 'atHome'   => $atHome,
                 'distance' => $distance,
+                'atPlace2' => $atPlace2,
                 'zone'     => (bool) ($location['isInSafeZone'] ?? false) ? (string) ($location['safeZoneLabel'] ?? '') : '',
                 'time'     => $time,
                 'type'     => (string) ($location['locateType'] ?? ''),
@@ -254,6 +277,11 @@ class XploraWatch extends IPSModule
             'p'      => $points,
             'home'   => $this->GetHome(),
             'radius' => $this->ReadPropertyInteger('HomeRadius'),
+            'place2' => $this->GetPlace2() === null ? null : [
+                'pos'    => $this->GetPlace2(),
+                'radius' => $this->ReadPropertyInteger('Place2Radius'),
+                'name'   => $this->GetPlace2Name(),
+            ],
             'days'   => $days,
             'theme'  => $this->ReadPropertyInteger('TileTheme'),
             'lang'   => $this->Translate('en-US'),
@@ -326,6 +354,25 @@ class XploraWatch extends IPSModule
             $ids = IPS_GetInstanceListByModuleID(self::LOCATION_CONTROL);
             $json = $ids === [] ? '' : (string) IPS_GetProperty($ids[0], 'Location');
         }
+        return $this->ParseLocation($json);
+    }
+
+    /** Second place (e.g. school, work, second home) or null if not set. */
+    private function GetPlace2(): ?array
+    {
+        return $this->ParseLocation($this->ReadPropertyString('Place2Location'));
+    }
+
+    /** Name of the second place, "Second place" if no name is set. */
+    private function GetPlace2Name(): string
+    {
+        $name = trim($this->ReadPropertyString('Place2Name'));
+        return $name !== '' ? $name : $this->Translate('Second place');
+    }
+
+    /** SelectLocation JSON → [latitude, longitude] or null if empty / 0,0. */
+    private function ParseLocation(string $json): ?array
+    {
         $location = json_decode($json, true);
         if (!is_array($location) || !isset($location['latitude'], $location['longitude'])) {
             return null;
@@ -336,6 +383,15 @@ class XploraWatch extends IPSModule
             return null;
         }
         return [$latitude, $longitude];
+    }
+
+    /** Renames a variable of the instance when the configured name changed. */
+    private function SetNameIfChanged(string $ident, string $name): void
+    {
+        $id = @IPS_GetObjectIDByIdent($ident, $this->InstanceID);
+        if ($id !== false && IPS_GetName($id) !== $name) {
+            IPS_SetName($id, $name);
+        }
     }
 
     /** Great circle distance in meters. */
@@ -374,9 +430,13 @@ class XploraWatch extends IPSModule
         $warn = '#f5a623';
         $bad = '#e74c3c';
         $info = '#4aa3ff';
+        $place = '#9b6bdf';
         $dec = $this->Translate('.');
 
-        if ($d['atHome'] !== null) {
+        if ($d['atPlace2'] === true && $d['atHome'] !== true) {
+            $status = $this->GetPlace2Name();
+            $color = $place;
+        } elseif ($d['atHome'] !== null) {
             $status = $this->Translate($d['atHome'] ? 'At home' : 'On the way');
             $color = $d['atHome'] ? $ok : $warn;
         } else {
