@@ -544,7 +544,7 @@ class XploraWatch extends IPSModule
     /**
      * Mini tile for a small tile of the tile visualization: status (colored) and battery in the first line,
      * distance from home and age of the location plus a battery bar in the second line.
-     * The age ("15 min ago") is refreshed in the browser every 30 seconds.
+     * The age ("15 min") is refreshed in the browser every 30 seconds.
      */
     private function MiniTileHTML(array $d): string
     {
@@ -555,7 +555,7 @@ class XploraWatch extends IPSModule
         if ($d['distance'] !== null && $d['atHome'] !== true) {
             $info = $d['distance'] < 1000
                 ? sprintf('%d m', (int) round($d['distance']))
-                : number_format($d['distance'] / 1000, 1, $this->Translate('.'), '') . ' km';
+                : number_format($d['distance'] / 1000, 0, '', '') . ' km';
         }
 
         $battery = '';
@@ -567,10 +567,10 @@ class XploraWatch extends IPSModule
         }
 
         $texts = json_encode([
-            'now' => $this->Translate('just now'),
-            'min' => $this->Translate('%d min ago'),
-            'h'   => $this->Translate('%d h ago'),
-            'd'   => $this->Translate('%d d ago'),
+            'now' => $this->Translate('now'),
+            'min' => $this->Translate('%d min'),
+            'h'   => $this->Translate('%d h'),
+            'd'   => $this->Translate('%d d'),
         ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG);
 
         $dark = '--fg:#e8edf2;--sub:#9aa5b1;--track:rgba(255,255,255,.15)';
@@ -604,7 +604,7 @@ class XploraWatch extends IPSModule
             . 'upd();setInterval(upd,30000);})();</script>';
     }
 
-    /** Age of a location as text, e.g. "15 min ago". */
+    /** Age of a location as short text for the mini tile, e.g. "15 min". */
     private function Age(int $time): string
     {
         if ($time <= 0) {
@@ -612,15 +612,15 @@ class XploraWatch extends IPSModule
         }
         $s = max(0, time() - $time);
         if ($s < 60) {
-            return $this->Translate('just now');
+            return $this->Translate('now');
         }
         if ($s < 3600) {
-            return sprintf($this->Translate('%d min ago'), intdiv($s, 60));
+            return sprintf($this->Translate('%d min'), intdiv($s, 60));
         }
         if ($s < 86400) {
-            return sprintf($this->Translate('%d h ago'), intdiv($s, 3600));
+            return sprintf($this->Translate('%d h'), intdiv($s, 3600));
         }
-        return sprintf($this->Translate('%d d ago'), intdiv($s, 86400));
+        return sprintf($this->Translate('%d d'), intdiv($s, 86400));
     }
 
     /**
