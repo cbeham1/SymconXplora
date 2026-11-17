@@ -20,6 +20,9 @@ class XploraWatch extends IPSModule
     private const MAX_ACCURACY_BONUS = 200;
     private const COORDINATE_DIGITS = 7;
     private const GEOCODER = 'https://nominatim.openstreetmap.org/search';
+    private const REVERSE_GEOCODER = 'https://nominatim.openstreetmap.org/reverse';
+    private const PLACE_CACHE_DISTANCE = 300;
+    private const USER_AGENT = 'User-Agent: SymconXplora (+https://github.com/cbeham1/SymconXplora)';
 
     private const STATUS_NO_WARD = 201;
     private const STATUS_REQUEST_FAILED = 202;
@@ -44,6 +47,7 @@ class XploraWatch extends IPSModule
         $this->RegisterPropertyBoolean('ShowMap', true);
         $this->RegisterPropertyBoolean('ShowTile', true);
         $this->RegisterPropertyBoolean('ShowMiniTile', false);
+        $this->RegisterPropertyBoolean('ShowPlaceName', true);
         $this->RegisterPropertyBoolean('TileMap', true);
         $this->RegisterPropertyInteger('TileTheme', 0);
         $this->RegisterPropertyBoolean('ShowHistory', false);
@@ -53,6 +57,7 @@ class XploraWatch extends IPSModule
         $this->RegisterAttributeString('HookToken', '');
 
         $this->RegisterAttributeInteger('LastLocateRequest', 0);
+        $this->RegisterAttributeString('PlaceCache', '{}');
 
         $this->RegisterTimer('Update', 0, 'XPLW_Update($_IPS[\'TARGET\']);');
     }
@@ -219,7 +224,13 @@ class XploraWatch extends IPSModule
             'lng'      => $longitude,
             'address'  => $address,
             'accuracy' => $accuracy,
+            'place'    => '',
         ];
+        // Name of the town/village instead of "On the way" (only needed for the tiles and only when away)
+        if (($this->ReadPropertyBoolean('ShowTile') || $this->ReadPropertyBoolean('ShowMiniTile'))
+            && $this->ReadPropertyBoolean('ShowPlaceName') && $atHome === false && $atPlace2 !== true) {
+            $tileData['place'] = $this->NearestPlace($latitude, $longitude, trim((string) ($location['city'] ?? '')));
+        }
         if ($this->ReadPropertyBoolean('ShowTile')) {
             $this->SetValueIfChanged('Tile', $this->TileHTML($tileData));
         }
@@ -264,7 +275,7 @@ class XploraWatch extends IPSModule
             CURLOPT_CONNECTTIMEOUT => 8,
             CURLOPT_TIMEOUT        => 15,
             // Nominatim requires an identifying User-Agent
-            CURLOPT_HTTPHEADER     => ['User-Agent: SymconXplora (+https://github.com/cbeham1/SymconXplora)', 'Accept-Language: ' . $this->Translate('en-US')],
+            CURLOPT_HTTPHEADER     => [self::USER_AGENT, 'Accept-Language: ' . $this->Translate('en-US')],
         ]);
         $raw = curl_exec($curl);
         $status = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
@@ -472,11 +483,57 @@ class XploraWatch extends IPSModule
             . 'src="https://www.openstreetmap.org/export/embed.html?bbox=' . $box . '&amp;layer=mapnik&amp;marker=' . $marker . '"></iframe>';
     }
 
+    /**
+     * Name of the town/village at the location: the city delivered by Xplora, otherwise reverse geocoding
+     * (OpenStreetMap Nominatim). The result is cached and only looked up again after moving more than 300 m.
+     */
+    private function NearestPlace(float $latitude, float $longitude, string $city): string
+    {
+        if ($city !== '') {
+            return $city;
+        }
+        $cache = json_decode($this->ReadAttributeString('PlaceCache'), true);
+        if (is_array($cache) && isset($cache['lat'], $cache['lng'], $cache['name'])
+            && $this->Distance((float) $cache['lat'], (float) $cache['lng'], $latitude, $longitude) <= self::PLACE_CACHE_DISTANCE) {
+            return (string) $cache['name'];
+        }
+        $url = self::REVERSE_GEOCODER . '?' . http_build_query(['format' => 'jsonv2', 'zoom' => 14, 'lat' => $latitude, 'lon' => $longitude]);
+        $curl = curl_init($url);
+        curl_setopt_array($curl, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_TIMEOUT        => 10,
+            CURLOPT_HTTPHEADER     => [self::USER_AGENT, 'Accept-Language: ' . $this->Translate('en-US')],
+        ]);
+        $raw = curl_exec($curl);
+        $status = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        curl_close($curl);
+        $this->SendDebug('NearestPlace', 'HTTP ' . $status . ' ' . (is_string($raw) ? $raw : ''), 0);
+        $result = is_string($raw) && $status === 200 ? json_decode($raw, true) : null;
+        if (!is_array($result)) {
+            // Lookup failed: keep the last known name, if any
+            return is_array($cache) ? (string) ($cache['name'] ?? '') : '';
+        }
+        $address = (array) ($result['address'] ?? []);
+        $name = '';
+        foreach (['village', 'town', 'city', 'hamlet', 'suburb', 'municipality', 'county'] as $key) {
+            if (!empty($address[$key])) {
+                $name = (string) $address[$key];
+                break;
+            }
+        }
+        $this->WriteAttributeString('PlaceCache', json_encode(['lat' => $latitude, 'lng' => $longitude, 'name' => $name]));
+        return $name;
+    }
+
     /** Status text and color: second place (purple), at home (green), on the way (orange), located without home (blue). */
     private function StatusInfo(array $d): array
     {
         if ($d['atPlace2'] === true && $d['atHome'] !== true) {
             return [$this->GetPlace2Name(), '#9b6bdf'];
+        }
+        if ($d['atHome'] === false && ($d['place'] ?? '') !== '') {
+            return [$d['place'], '#f5a623'];
         }
         if ($d['atHome'] !== null) {
             return [$this->Translate($d['atHome'] ? 'At home' : 'On the way'), $d['atHome'] ? '#2ecc71' : '#f5a623'];

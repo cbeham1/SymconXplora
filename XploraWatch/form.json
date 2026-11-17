@@ -112,6 +112,11 @@
         },
         {
             "type": "CheckBox",
+            "name": "ShowPlaceName",
+            "caption": "Show the town/village instead of \"On the way\" in the tiles"
+        },
+        {
+            "type": "CheckBox",
             "name": "ShowMiniTile",
             "caption": "Create mini tile (small HTML box: status, battery, distance, age of the location)"
         },

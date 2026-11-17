@@ -70,6 +70,7 @@
             "Distance to %s": "Abstand zu %s",
             "Address (street, town)": "Adresse (Straße, Ort)",
             "Mini tile": "Mini-Kachel",
+            "Show the town/village instead of \"On the way\" in the tiles": "In den Kacheln den Ort statt „Unterwegs“ anzeigen",
             "Create mini tile (small HTML box: status, battery, distance, age of the location)": "Mini-Kachel anlegen (kleine HTML-Box: Status, Akku, Abstand, Alter der Ortung)",
             "just now": "gerade eben",
             "%d min ago": "vor %d min",
