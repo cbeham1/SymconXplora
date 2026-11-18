@@ -27,7 +27,7 @@ Holds the login to an Xplora parent account and forwards the requests of the Xpl
 
 ### 3. Installation
 
-* Install the library "Xplora" via the Module Store or Module Control.
+* Install the library "Xplora" via the Module Store (basket icon at the top right of the management console) or Module Control.
 * The instance is created automatically together with the first Xplora Configurator or Xplora Watch instance, or manually via "Add instance" → "Xplora Cloud".
 
 ### 4. Configuration

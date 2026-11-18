@@ -46,7 +46,7 @@ Uhren, die mit der Xplora-Eltern-App genutzt werden können (getestet mit Xplora
 
 Am besten über den Xplora Configurator. Manuell: „Instanz hinzufügen“ → „Xplora Watch“ und die Uhren-ID eintragen.
 
-Tipp: Die Instanz „Xplora <Name>“ nennen, z. B. „Xplora Emil“ – Kachel und Verlauf zeigen dann „Emil“.
+Tipp: Die Instanz „Xplora <Name>“ nennen, z. B. „Xplora Lena“ – Kachel und Verlauf zeigen dann „Lena“.
 
 ### 5. Konfiguration
 

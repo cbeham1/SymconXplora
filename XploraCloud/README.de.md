@@ -29,7 +29,7 @@ Hält die Anmeldung an einem Xplora-Elternkonto und leitet die Anfragen der Inst
 
 ### 3. Installation
 
-* Bibliothek „Xplora“ über den Module Store oder Module Control installieren.
+* Bibliothek „Xplora“ über den Module Store (Korb-Symbol oben rechts in der Verwaltungskonsole) oder Module Control installieren.
 * Die Instanz wird mit der ersten Instanz „Xplora Configurator“ bzw. „Xplora Watch“ automatisch angelegt,
   oder manuell über „Instanz hinzufügen“ → „Xplora Cloud“.
 
