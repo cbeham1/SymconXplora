@@ -365,7 +365,7 @@ class XploraWatch extends IPSModule
                 'period'     => $this->Translate('Period'),
                 'stays'      => $this->Translate('Stays'),
                 'atHome'     => $this->Translate('at home'),
-                'kmFromHome' => $this->Translate('%s km from home'),
+                'fromHome'   => $this->Translate('%s from home'),
                 'stay'       => $this->Translate('stay'),
             ],
         ];

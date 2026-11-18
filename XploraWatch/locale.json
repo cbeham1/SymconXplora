@@ -35,6 +35,7 @@
             "Stays": "Aufenthalte",
             "at home": "zu Hause",
             "%s km from home": "%s km von zu Hause",
+            "%s from home": "%s von zu Hause",
             "stay": "Aufenthalt",
             "WebHook Control not found, the location history is not available": "WebHook Control nicht gefunden, der Verlauf ist nicht verfügbar",
             "On the way": "Unterwegs",

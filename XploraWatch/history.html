@@ -49,6 +49,8 @@ const T = D.t;
 document.documentElement.lang = D.lang;
 document.documentElement.className = ['auto', 'dark', 'light'][D.theme] || 'auto';
 const dec = (v, n) => v.toLocaleString(D.lang, {minimumFractionDigits: n, maximumFractionDigits: n});
+// Distance in meters: below 1000 m in m, otherwise in km
+const len = m => m < 1000 ? Math.round(m) + ' m' : dec(m / 1000, 1) + ' km';
 document.getElementById('leer').textContent = T.empty;
 document.getElementById('heute').textContent = T.today;
 document.getElementById('prev').title = T.prev;
@@ -157,9 +159,9 @@ function statistik(){
     const a=pts[s],b=pts[i-1]; if (b[0]-a[0]>=600){
       const hz = D.home && dist(a[1],a[2],D.home[0],D.home[1])<=r(a);
       const p2 = !hz && D.place2 && dist(a[1],a[2],D.place2.pos[0],D.place2.pos[1])<=D.place2.radius+Math.min(a[3]||0,200);
-      st.push(hm(a[0])+'–'+hm(b[0])+' '+(hz?T.atHome:(p2?esc(D.place2.name):(D.home?T.kmFromHome.replace('%s',dec(dist(a[1],a[2],D.home[0],D.home[1])/1000,1)):T.stay)))); }
+      st.push(hm(a[0])+'–'+hm(b[0])+' '+(hz?T.atHome:(p2?esc(D.place2.name):(D.home?T.fromHome.replace('%s',len(dist(a[1],a[2],D.home[0],D.home[1]))):T.stay)))); }
     s=i; }
-  el.innerHTML='<div class="st"><span>'+T.distance+'</span><b>'+dec(m/1000,1)+' km</b></div>'
+  el.innerHTML='<div class="st"><span>'+T.distance+'</span><b>'+len(m)+'</b></div>'
     +(D.home?'<div class="st"><span>'+T.away+'</span><b>'+dauer(weg)+'</b></div>':'')
     +'<div class="st"><span>'+T.points+'</span><b>'+pts.length+'</b></div>'
     +'<div class="st"><span>'+T.period+'</span><b>'+hm(pts[0][0])+'–'+hm(pts[pts.length-1][0])+'</b></div>'
