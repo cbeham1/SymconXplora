@@ -26,7 +26,7 @@ Shows location, address, safe zone, battery and charging state of one Xplora wat
 * Optional: asks the watch for a new location if the last one is too old (costs some battery of the watch)
 * Optional: status tile for the tile visualization (at home / on the way, distance, battery, time of the location),
   with a light map of the location as background (Esri "Light Gray Canvas" map tiles – Esri, HERE, Garmin, © OpenStreetMap contributors – loaded by the browser of the viewer)
-* Optional: map (OpenStreetMap) as HTML box
+* Optional: map as HTML box (Leaflet from cdnjs) with switch OpenStreetMap / satellite (Esri World Imagery) and "Center"
 * Optional: location history (1–60 days) – map per day with date selection, replay, colored track, distance,
   time away from home and stays; stored in the instance, page delivered by a WebHook `/hook/XploraWatch<InstanceID>`
   protected by a random token (Leaflet from cdnjs, OpenStreetMap / Esri World Imagery)
@@ -63,7 +63,7 @@ Best via the Xplora Configurator. Manually: "Add instance" → "Xplora Watch" an
 | Create mini tile              | Small HTML box "Mini tile" for a small tile: status (colored), battery, distance from home, age of the location (refreshed in the browser) and battery bar (default off) |
 | Map as background             | Shows a map of the location behind the status tile (default on)                |
 | Design of the status tile     | Automatic (design of the tile visualization, history: device), dark or light               |
-| Create map variable           | HTML box with an OpenStreetMap map of the last location                        |
+| Create map variable           | HTML box with a map of the last location (map / satellite, "Center")            |
 | Record location history       | Stores the locations and creates the HTML box "Location history" (default off) |
 | Keep history for              | Days the locations are kept (1–60, default 15)                                 |
 | Update now                    | Reads the last location immediately                                           |

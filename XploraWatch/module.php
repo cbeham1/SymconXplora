@@ -206,7 +206,7 @@ class XploraWatch extends IPSModule
             $this->SetValueIfChanged('AtPlace2', $atPlace2);
         }
         if ($this->ReadPropertyBoolean('ShowMap')) {
-            $this->SetValueIfChanged('Map', $this->MapHTML($latitude, $longitude));
+            $this->SetValueIfChanged('Map', $this->MapHTML($latitude, $longitude, $accuracy, $home));
         }
         if ($this->ReadPropertyBoolean('ShowHistory')) {
             $this->AddHistoryPoint($time, $latitude, $longitude, $accuracy, (string) ($location['locateType'] ?? ''));
@@ -475,12 +475,36 @@ class XploraWatch extends IPSModule
         return $time > 20000000000 ? intdiv($time, 1000) : $time;
     }
 
-    private function MapHTML(float $latitude, float $longitude): string
+    /** Map (Leaflet) with switch OpenStreetMap / satellite (Esri World Imagery) and a button that centers the location again. */
+    private function MapHTML(float $latitude, float $longitude, int $accuracy, ?array $home): string
     {
-        $box = sprintf('%.5F,%.5F,%.5F,%.5F', $longitude - 0.0045, $latitude - 0.0025, $longitude + 0.0045, $latitude + 0.0025);
-        $marker = sprintf('%.6F,%.6F', $latitude, $longitude);
-        return '<iframe style="width:100%;height:100%;min-height:400px;border:0" loading="lazy" referrerpolicy="no-referrer" '
-            . 'src="https://www.openstreetmap.org/export/embed.html?bbox=' . $box . '&amp;layer=mapnik&amp;marker=' . $marker . '"></iframe>';
+        $data = json_encode([
+            'pos'  => [round($latitude, 7), round($longitude, 7)],
+            'acc'  => $accuracy,
+            'home' => $home === null ? null : [$home[0], $home[1]],
+            't'    => ['map' => $this->Translate('Map'), 'sat' => $this->Translate('Satellite'), 'center' => $this->Translate('Center')],
+        ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG);
+        return '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">'
+            . '<style>html,body{margin:0;height:100%}#xmap{position:absolute;inset:0;min-height:400px;border-radius:6px}'
+            . '.xb{position:absolute;top:10px;left:10px;z-index:1000;display:flex;gap:6px}'
+            . '.xb button{background:#fff;color:#1f2933;border:1px solid #cfd6dd;border-radius:8px;padding:5px 10px;font:600 13px "Segoe UI",Arial,sans-serif;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.3)}'
+            . '.xb button.on{background:#e08a00;border-color:#e08a00;color:#fff}.xhm{font-size:20px;line-height:22px;text-align:center}</style>'
+            . '<div id="xmap"></div><div class="xb"><button id="xo"></button><button id="xs"></button><button id="xc"></button></div>'
+            . '<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>'
+            . '<script>(function(){var D=' . $data . ',g=function(i){return document.getElementById(i);};'
+            . 'g("xo").textContent=D.t.map;g("xs").textContent=D.t.sat;g("xc").textContent="\u2316 "+D.t.center;'
+            . 'var m=L.map("xmap").setView(D.pos,16);'
+            . 'var osm=L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"\u00a9 OpenStreetMap"});'
+            . 'var sat=L.layerGroup([L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:"\u00a9 Esri"}),'
+            . 'L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",{maxZoom:19})]);'
+            // The chosen layer is remembered in the browser if possible (the variable is rewritten with every new location)
+            . 'function lay(s){m.removeLayer(s?osm:sat);m.addLayer(s?sat:osm);g("xo").className=s?"":"on";g("xs").className=s?"on":"";try{localStorage.setItem("xplSat",s?"1":"0");}catch(e){}}'
+            . 'var s0=false;try{s0=localStorage.getItem("xplSat")==="1";}catch(e){}lay(s0);'
+            . 'if(D.acc>0){L.circle(D.pos,{radius:D.acc,color:"#e08a00",weight:1,fillOpacity:0.12}).addTo(m);}'
+            . 'L.circleMarker(D.pos,{radius:8,color:"#fff",weight:2,fillColor:"#e08a00",fillOpacity:1}).addTo(m);'
+            . 'if(D.home){L.marker(D.home,{icon:L.divIcon({className:"xhm",html:"\ud83c\udfe0",iconSize:[24,24]}),interactive:false}).addTo(m);}'
+            . 'g("xo").onclick=function(){lay(false);};g("xs").onclick=function(){lay(true);};g("xc").onclick=function(){m.setView(D.pos,16);};'
+            . '})();</script>';
     }
 
     /**
