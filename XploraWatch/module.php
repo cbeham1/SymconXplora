@@ -870,8 +870,9 @@ class XploraWatch extends IPSModule
         $d = json_decode($this->ReadAttributeString('TileData'), true);
         if (!is_array($d)) {
             $text = $this->ReadPropertyString('WardID') === '' ? $this->Translate('No watch ID configured') : $this->Translate('No location yet');
-            return ['html' => '<div class="xw" style="height:100%;display:flex;align-items:center;justify-content:center;'
-                . 'font-family:\'Segoe UI\',Arial,sans-serif;color:#9aa5b1">' . htmlspecialchars($text, ENT_QUOTES, 'UTF-8') . '</div>', 'fresh' => $fresh];
+            $html = '<div class="xw" style="height:100%;display:flex;align-items:center;justify-content:center;'
+                . 'font-family:\'Segoe UI\',Arial,sans-serif;color:#9aa5b1">' . htmlspecialchars($text, ENT_QUOTES, 'UTF-8') . '</div>';
+            return ['html' => $html, 'fresh' => $fresh];
         }
         return ['html' => $this->TileHTML($d, false), 'fresh' => $fresh];
     }
