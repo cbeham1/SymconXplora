@@ -578,7 +578,7 @@ class XploraWatch extends IPSModule
         $theme = $this->ReadPropertyInteger('TileTheme');
         $vars = '.cw{' . ($theme === 2 ? $light : $dark) . '}';
         if ($theme === 0) {
-            $vars .= '@media (prefers-color-scheme: light){.cw{' . $light . '}}';
+            $vars .= '@media (prefers-color-scheme: light){.cw:not(.vd){' . $light . '}}.cw.vl{' . $light . '}';
         }
 
         return '<style>'
@@ -597,6 +597,7 @@ class XploraWatch extends IPSModule
             . '<div class="cl"><span class="ci" id="ci" data-info="' . $e($info) . '" data-ts="' . (int) $d['time'] . '">'
             . $e(trim($info . ($info !== '' ? ' · ' : '') . $this->Age($d['time']))) . '</span>' . $bar . '</div>'
             . '</div>'
+            . ($theme === 0 ? $this->ThemeScript('cw') : '')
             . '<script>(function(){var T=' . $texts . ',el=document.getElementById("ci");'
             . 'function age(t){var s=Math.floor(Date.now()/1000)-t;if(t<=0)return"";if(s<60)return T.now;if(s<3600)return T.min.replace("%d",Math.floor(s/60));'
             . 'if(s<86400)return T.h.replace("%d",Math.floor(s/3600));return T.d.replace("%d",Math.floor(s/86400));}'
@@ -683,7 +684,7 @@ class XploraWatch extends IPSModule
             $ty = (int) floor($y);
             $px = (int) round(512 + ($x - $tx) * 256);
             $py = (int) round(256 + ($y - $ty) * 256);
-            // Theme 0 = automatic (prefers-color-scheme), 1 = dark, 2 = light; automatic contains both maps
+            // Theme 0 = automatic (design of the visualization, see ThemeScript), 1 = dark, 2 = light; automatic contains both maps
             $theme = $this->ReadPropertyInteger('TileTheme');
             $layers = ['d' => 'World_Dark_Gray_Base', 'l' => 'World_Light_Gray_Base'];
             if ($theme === 1) {
@@ -715,7 +716,9 @@ class XploraWatch extends IPSModule
         $theme = $this->ReadPropertyInteger('TileTheme');
         $vars = $theme === 2 ? '.xw{' . $light . '}.xt.d{display:none}' : '.xw{' . $dark . '}.xt.l{display:none}';
         if ($theme === 0) {
-            $vars .= '@media (prefers-color-scheme: light){.xw{' . $light . '}.xt.d{display:none}.xt.l{display:grid}}';
+            $lightMap = '.xw .xt.d{display:none}.xw .xt.l{display:grid}';
+            $vars .= '@media (prefers-color-scheme: light){.xw:not(.vd){' . $light . '}' . str_replace('.xw ', '.xw:not(.vd) ', $lightMap) . '}'
+                . '.xw.vl{' . $light . '}' . str_replace('.xw ', '.xw.vl ', $lightMap);
         }
 
         $css = '<style>'
@@ -753,7 +756,18 @@ class XploraWatch extends IPSModule
             . '<div class="xhero">' . $ring . '<div><div class="xs">' . $e($status) . '</div>' . ($sub !== '' ? '<div class="xu">' . $e($sub) . '</div>' : '') . '</div></div>'
             . '<div class="xvs">' . $tiles . '</div>'
             . $address
-            . '</div></div>';
+            . '</div></div>'
+            . ($theme === 0 ? $this->ThemeScript('xw') : '');
+    }
+
+    /** Automatic design: follows the card/text colors that the tile visualization passes to HTML content, otherwise prefers-color-scheme. */
+    private function ThemeScript(string $class): string
+    {
+        return '<script>(function(){var s=getComputedStyle(document.documentElement);'
+            . 'function l(n){var v=s.getPropertyValue(n).replace(/[^0-9a-f]/gi,"");if(v.length<6){return -1;}'
+            . 'v=v.length===8&&/^ff/i.test(v)?v.slice(2):v.slice(0,6);var c=parseInt(v,16);return 0.299*(c>>16)+0.587*(c>>8&255)+0.114*(c&255);}'
+            . 'var b=l("--card-color"),f=l("--content-color");if(b<0){return;}'
+            . 'document.querySelectorAll(".' . $class . '").forEach(function(e){e.classList.add(b<(f<0?128:f)?"vd":"vl");});})();</script>';
     }
 
     /** Adds a location to the history (only new location times) and removes points older than the retention. */

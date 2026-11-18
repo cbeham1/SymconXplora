@@ -47,7 +47,7 @@
             "Create status tile (HTML box for the tile visualization)": "Statuskachel anlegen (HTML-Box für die Kachel-Visualisierung)",
             "Map of the location as background of the status tile (Esri)": "Karte des Standorts als Hintergrund der Statuskachel (Esri)",
             "Design of the status tile": "Design der Statuskachel",
-            "Automatic (light/dark mode of the device)": "Automatisch (heller/dunkler Modus des Geräts)",
+            "Automatic (design of the visualization)": "Automatisch (Design der Visualisierung)",
             "Dark": "Dunkel",
             "Light": "Hell",
             "No response from the cloud instance": "Keine Antwort von der Cloud-Instanz",
