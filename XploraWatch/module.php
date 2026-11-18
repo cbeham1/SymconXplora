@@ -476,11 +476,15 @@ class XploraWatch extends IPSModule
     }
 
     /**
-     * Map (Leaflet) with switch street map / satellite and a button that centers the location again. Esri tiles (no key needed):
-     * the OpenStreetMap tile servers block requests without referrer, and the tile visualization shows HTML boxes as data URL.
+     * Map with switch map / satellite and a button that centers the location again.
+     * Map = OpenStreetMap embed page (with buildings; the OSM tile servers themselves block HTML boxes, which the tile
+     * visualization shows as data URL without referrer). Satellite = Leaflet with Esri World Imagery (no key needed),
+     * only loaded when it is chosen.
      */
     private function MapHTML(float $latitude, float $longitude, int $accuracy, ?array $home): string
     {
+        $box = sprintf('%.5F,%.5F,%.5F,%.5F', $longitude - 0.0045, $latitude - 0.0025, $longitude + 0.0045, $latitude + 0.0025);
+        $marker = sprintf('%.6F,%.6F', $latitude, $longitude);
         $data = json_encode([
             'pos'  => [round($latitude, 7), round($longitude, 7)],
             'acc'  => $accuracy,
@@ -488,25 +492,29 @@ class XploraWatch extends IPSModule
             't'    => ['map' => $this->Translate('Map'), 'sat' => $this->Translate('Satellite'), 'center' => $this->Translate('Center')],
         ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG);
         return '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">'
-            . '<style>html,body{margin:0;height:100%}#xmap{position:absolute;inset:0;min-height:400px;border-radius:6px}'
-            . '.xb{position:absolute;top:10px;left:10px;z-index:1000;display:flex;gap:6px}'
+            . '<style>html,body{margin:0;height:100%}#xosm,#xmap{position:absolute;inset:0;min-height:400px;width:100%;height:100%;border:0}#xmap{display:none}'
+            . '.xb{position:absolute;bottom:24px;left:10px;z-index:1000;display:flex;gap:6px}'
             . '.xb button{background:#fff;color:#1f2933;border:1px solid #cfd6dd;border-radius:8px;padding:5px 10px;font:600 13px "Segoe UI",Arial,sans-serif;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.3)}'
             . '.xb button.on{background:#e08a00;border-color:#e08a00;color:#fff}.xhm{font-size:20px;line-height:22px;text-align:center}</style>'
+            . '<iframe id="xosm" loading="lazy" referrerpolicy="no-referrer" '
+            . 'src="https://www.openstreetmap.org/export/embed.html?bbox=' . $box . '&amp;layer=mapnik&amp;marker=' . $marker . '"></iframe>'
             . '<div id="xmap"></div><div class="xb"><button id="xo"></button><button id="xs"></button><button id="xc"></button></div>'
             . '<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>'
-            . '<script>(function(){var D=' . $data . ',g=function(i){return document.getElementById(i);};'
+            . '<script>(function(){var D=' . $data . ',g=function(i){return document.getElementById(i);},m=null,sat=false;'
             . 'g("xo").textContent=D.t.map;g("xs").textContent=D.t.sat;g("xc").textContent="\u2316 "+D.t.center;'
-            . 'var m=L.map("xmap",{zoomControl:false}).setView(D.pos,16);L.control.zoom({position:"topright"}).addTo(m);'
-            . 'var osm=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:"Esri, HERE, Garmin, \u00a9 OpenStreetMap"});'
-            . 'var sat=L.layerGroup([L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:"\u00a9 Esri"}),'
-            . 'L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",{maxZoom:19})]);'
-            // The chosen layer is remembered in the browser if possible (the variable is rewritten with every new location)
-            . 'function lay(s){m.removeLayer(s?osm:sat);m.addLayer(s?sat:osm);g("xo").className=s?"":"on";g("xs").className=s?"on":"";try{localStorage.setItem("xplSat",s?"1":"0");}catch(e){}}'
-            . 'var s0=false;try{s0=localStorage.getItem("xplSat")==="1";}catch(e){}lay(s0);'
+            . 'function init(){m=L.map("xmap",{zoomControl:false}).setView(D.pos,17);L.control.zoom({position:"topright"}).addTo(m);'
+            . 'L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:"\u00a9 Esri"}).addTo(m);'
+            . 'L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",{maxZoom:19}).addTo(m);'
             . 'if(D.acc>0){L.circle(D.pos,{radius:D.acc,color:"#e08a00",weight:1,fillOpacity:0.12}).addTo(m);}'
             . 'L.circleMarker(D.pos,{radius:8,color:"#fff",weight:2,fillColor:"#e08a00",fillOpacity:1}).addTo(m);'
-            . 'if(D.home){L.marker(D.home,{icon:L.divIcon({className:"xhm",html:"\ud83c\udfe0",iconSize:[24,24]}),interactive:false}).addTo(m);}'
-            . 'g("xo").onclick=function(){lay(false);};g("xs").onclick=function(){lay(true);};g("xc").onclick=function(){m.setView(D.pos,16);};'
+            . 'if(D.home){L.marker(D.home,{icon:L.divIcon({className:"xhm",html:"\ud83c\udfe0",iconSize:[24,24]}),interactive:false}).addTo(m);}}'
+            // The chosen view is remembered in the browser if possible (the variable is rewritten with every new location)
+            . 'function lay(s){sat=s;g("xosm").style.display=s?"none":"block";g("xmap").style.display=s?"block":"none";'
+            . 'if(s){if(!m){init();}else{m.invalidateSize();}}g("xo").className=s?"":"on";g("xs").className=s?"on":"";'
+            . 'try{localStorage.setItem("xplSat",s?"1":"0");}catch(e){}}'
+            . 'var s0=false;try{s0=localStorage.getItem("xplSat")==="1";}catch(e){}lay(s0);'
+            . 'g("xo").onclick=function(){lay(false);};g("xs").onclick=function(){lay(true);};'
+            . 'g("xc").onclick=function(){if(sat){m.setView(D.pos,17);}else{var f=g("xosm");f.src=f.src;}};'
             . '})();</script>';
     }
 

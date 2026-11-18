@@ -28,7 +28,7 @@ Zeigt Standort, Adresse, Sicherheitszone, Akku und Ladezustand einer Xplora-Uhr 
 * Optional: **Statuskachel** für die Kachel-Visualisierung (zu Hause / unterwegs, Abstand, Akku, Ortungszeit),
   mit heller bzw. dunkler Karte des Standorts als Hintergrund (Esri „Gray Canvas“ – Esri, HERE, Garmin, © OpenStreetMap;
   lädt der Browser des Betrachters)
-* Optional: Karte als HTML-Box (Leaflet von cdnjs) mit Umschalter Karte / Satellit (Esri World Street Map / World Imagery, ohne Schlüssel) und „Zentrieren“
+* Optional: Karte als HTML-Box (Leaflet von cdnjs) mit Umschalter Karte (OpenStreetMap-Einbettung) / Satellit (Esri World Imagery, ohne Schlüssel) und „Zentrieren“
 * Optional: **Verlauf** (1–60 Tage) – Karte je Tag mit Datumsauswahl, Wiedergabe, farbiger Spur, Strecke,
   Zeit außer Haus und Aufenthalten; in der Instanz gespeichert, Seite über WebHook `/hook/XploraWatch<InstanzID>`
   mit zufälligem Token (Leaflet von cdnjs, OpenStreetMap / Esri World Imagery)
