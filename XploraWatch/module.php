@@ -475,7 +475,10 @@ class XploraWatch extends IPSModule
         return $time > 20000000000 ? intdiv($time, 1000) : $time;
     }
 
-    /** Map (Leaflet) with switch OpenStreetMap / satellite (Esri World Imagery) and a button that centers the location again. */
+    /**
+     * Map (Leaflet) with switch street map / satellite and a button that centers the location again. Esri tiles (no key needed):
+     * the OpenStreetMap tile servers block requests without referrer, and the tile visualization shows HTML boxes as data URL.
+     */
     private function MapHTML(float $latitude, float $longitude, int $accuracy, ?array $home): string
     {
         $data = json_encode([
@@ -493,8 +496,8 @@ class XploraWatch extends IPSModule
             . '<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>'
             . '<script>(function(){var D=' . $data . ',g=function(i){return document.getElementById(i);};'
             . 'g("xo").textContent=D.t.map;g("xs").textContent=D.t.sat;g("xc").textContent="\u2316 "+D.t.center;'
-            . 'var m=L.map("xmap").setView(D.pos,16);'
-            . 'var osm=L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"\u00a9 OpenStreetMap"});'
+            . 'var m=L.map("xmap",{zoomControl:false}).setView(D.pos,16);L.control.zoom({position:"topright"}).addTo(m);'
+            . 'var osm=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:"Esri, HERE, Garmin, \u00a9 OpenStreetMap"});'
             . 'var sat=L.layerGroup([L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:"\u00a9 Esri"}),'
             . 'L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",{maxZoom:19})]);'
             // The chosen layer is remembered in the browser if possible (the variable is rewritten with every new location)

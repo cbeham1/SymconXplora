@@ -26,7 +26,7 @@ Shows location, address, safe zone, battery and charging state of one Xplora wat
 * Optional: asks the watch for a new location if the last one is too old (costs some battery of the watch)
 * Optional: status tile for the tile visualization (at home / on the way, distance, battery, time of the location),
   with a light map of the location as background (Esri "Light Gray Canvas" map tiles – Esri, HERE, Garmin, © OpenStreetMap contributors – loaded by the browser of the viewer)
-* Optional: map as HTML box (Leaflet from cdnjs) with switch OpenStreetMap / satellite (Esri World Imagery) and "Center"
+* Optional: map as HTML box (Leaflet from cdnjs) with switch street map / satellite (Esri World Street Map / World Imagery, no key needed) and "Center"
 * Optional: location history (1–60 days) – map per day with date selection, replay, colored track, distance,
   time away from home and stays; stored in the instance, page delivered by a WebHook `/hook/XploraWatch<InstanceID>`
   protected by a random token (Leaflet from cdnjs, OpenStreetMap / Esri World Imagery)
