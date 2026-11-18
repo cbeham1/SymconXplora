@@ -88,7 +88,11 @@
             "Update now": "Jetzt abfragen",
             "Request location from watch": "Ortung bei der Uhr anfordern",
             "No watch ID configured": "Keine Uhren-ID eingetragen",
-            "Request failed, see debug output and the cloud instance": "Abfrage fehlgeschlagen, siehe Debug-Ausgabe und Cloud-Instanz"
+            "Request failed, see debug output and the cloud instance": "Abfrage fehlgeschlagen, siehe Debug-Ausgabe und Cloud-Instanz",
+            "Instance as tile in the tile visualization (status tile with button \"Locate\")": "Instanz als Kachel in der Kachel-Visualisierung (Statuskachel mit Knopf „Orten“)",
+            "Locate": "Orten",
+            "Location requested …": "Ortung angefordert …",
+            "No location yet": "Noch keine Ortung"
         }
     }
 }

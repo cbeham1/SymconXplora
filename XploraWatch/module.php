@@ -24,6 +24,8 @@ class XploraWatch extends IPSModule
     private const PLACE_CACHE_DISTANCE = 300;
     private const USER_AGENT = 'User-Agent: SymconXplora (+https://github.com/cbeham1/SymconXplora)';
 
+    private const LOCATE_UPDATE_DELAY = 60;
+
     private const STATUS_NO_WARD = 201;
     private const STATUS_REQUEST_FAILED = 202;
 
@@ -46,6 +48,7 @@ class XploraWatch extends IPSModule
         $this->RegisterPropertyInteger('Place2Radius', 150);
         $this->RegisterPropertyBoolean('ShowMap', true);
         $this->RegisterPropertyBoolean('ShowTile', true);
+        $this->RegisterPropertyBoolean('InstanceTile', true);
         $this->RegisterPropertyBoolean('ShowMiniTile', false);
         $this->RegisterPropertyBoolean('ShowPlaceName', true);
         $this->RegisterPropertyBoolean('TileMap', true);
@@ -58,6 +61,7 @@ class XploraWatch extends IPSModule
 
         $this->RegisterAttributeInteger('LastLocateRequest', 0);
         $this->RegisterAttributeString('PlaceCache', '{}');
+        $this->RegisterAttributeString('TileData', '');
 
         $this->RegisterTimer('Update', 0, 'XPLW_Update($_IPS[\'TARGET\']);');
     }
@@ -68,6 +72,15 @@ class XploraWatch extends IPSModule
 
         $this->RegisterProfiles();
         $home = $this->GetHome() !== null;
+
+        // The instance itself can be placed in the tile visualization (HTML-SDK, not available in older Symcon versions):
+        // status tile with button "Locate"
+        if (method_exists($this, 'SetVisualizationType')) {
+            $this->SetVisualizationType($this->ReadPropertyBoolean('InstanceTile') ? 1 : 0);
+        }
+        if ($this->InstanceTileActive() && IPS_GetKernelRunlevel() === KR_READY) {
+            $this->UpdateVisualizationValue(json_encode($this->InstanceTileMessage()));
+        }
 
         $this->MaintainVariable('Tile', $this->Translate('Status tile'), VARIABLETYPE_STRING, '~HTMLBox', 0, $this->ReadPropertyBoolean('ShowTile'));
         $this->MaintainVariable('MiniTile', $this->Translate('Mini tile'), VARIABLETYPE_STRING, '~HTMLBox', 0, $this->ReadPropertyBoolean('ShowMiniTile'));
@@ -135,6 +148,49 @@ class XploraWatch extends IPSModule
         if ($Message === IPS_KERNELSTARTED && $this->ReadPropertyBoolean('ShowHistory')) {
             $this->RegisterHook();
         }
+    }
+
+    /** Actions of the instance tile (HTML-SDK). */
+    public function RequestAction($Ident, $Value): void
+    {
+        switch ($Ident) {
+            case 'Locate':
+                if ($this->RequestLocation()) {
+                    // Read the new location as soon as the watch should have sent it; Update() sets the regular interval again
+                    $this->SetTimerInterval('Update', self::LOCATE_UPDATE_DELAY * 1000);
+                }
+                break;
+            default:
+                throw new Exception('Invalid Ident');
+        }
+    }
+
+    /** HTML-SDK: instance tile, same content as the status tile; updates arrive via handleMessage(). */
+    public function GetVisualizationTile(): string
+    {
+        $texts = json_encode([
+            'locate'  => $this->Translate('Locate'),
+            'pending' => $this->Translate('Location requested …'),
+        ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG);
+        $initial = json_encode($this->InstanceTileMessage(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+            . '<style>html,body{margin:0;height:100%;background:transparent;overflow:hidden}#xroot{height:100%}'
+            . '.xbtn{margin-left:auto;flex:none;border:1px solid var(--line);background:var(--box);color:var(--fg);border-radius:20px;'
+            . 'padding:3px 11px;font:600 clamp(11px,3.2cqw,13px) "Segoe UI",Arial,sans-serif;white-space:nowrap;cursor:pointer}'
+            . '.xbtn:disabled{opacity:.6;cursor:default}</style></head>'
+            . '<body><div id="xroot"></div><script>(function(){var T=' . $texts . ',root=document.getElementById("xroot"),pending=0;'
+            . 'function theme(){var s=getComputedStyle(document.documentElement);'
+            . 'function l(n){var v=s.getPropertyValue(n).replace(/[^0-9a-f]/gi,"");if(v.length<6){return -1;}'
+            . 'v=v.length===8&&/^ff/i.test(v)?v.slice(2):v.slice(0,6);var c=parseInt(v,16);return 0.299*(c>>16)+0.587*(c>>8&255)+0.114*(c&255);}'
+            . 'var b=l("--card-color"),f=l("--content-color");if(b<0){return;}'
+            . 'root.querySelectorAll(".xw").forEach(function(e){e.classList.add(b<(f<0?128:f)?"vd":"vl");});}'
+            . 'function button(){var h=root.querySelector(".xh");if(!h){return;}var b=document.createElement("button");b.className="xbtn";'
+            . 'b.textContent=pending>Date.now()?T.pending:T.locate;b.disabled=pending>Date.now();'
+            . 'b.onclick=function(){pending=Date.now()+120000;b.disabled=true;b.textContent=T.pending;requestAction("Locate",true);};'
+            . 'h.insertBefore(b,h.querySelector(".xch"));}'
+            . 'window.handleMessage=function(data){var d=JSON.parse(data);if(d.html===undefined){return;}'
+            . 'if(d.fresh){pending=0;}root.innerHTML=d.html;theme();button();};'
+            . '})();handleMessage(' . json_encode($initial, JSON_HEX_TAG) . ');</script></body></html>';
     }
 
     public function ReceiveData($JSONString): string
@@ -227,7 +283,7 @@ class XploraWatch extends IPSModule
             'place'    => '',
         ];
         // Name of the town/village instead of "On the way" (only needed for the tiles and only when away)
-        if (($this->ReadPropertyBoolean('ShowTile') || $this->ReadPropertyBoolean('ShowMiniTile'))
+        if (($this->ReadPropertyBoolean('ShowTile') || $this->ReadPropertyBoolean('ShowMiniTile') || $this->ReadPropertyBoolean('InstanceTile'))
             && $this->ReadPropertyBoolean('ShowPlaceName') && $atHome === false && $atPlace2 !== true) {
             $tileData['place'] = $this->NearestPlace($latitude, $longitude, trim((string) ($location['city'] ?? '')));
         }
@@ -236,6 +292,11 @@ class XploraWatch extends IPSModule
         }
         if ($this->ReadPropertyBoolean('ShowMiniTile')) {
             $this->SetValueIfChanged('MiniTile', $this->MiniTileHTML($tileData));
+        }
+        if ($this->InstanceTileActive()) {
+            $fresh = $tileData['time'] > $this->ReadAttributeInteger('LastLocateRequest');
+            $this->WriteAttributeString('TileData', json_encode($tileData));
+            $this->UpdateVisualizationValue(json_encode($this->InstanceTileMessage($fresh)));
         }
 
         // Ask the watch for a new location if the last one is too old (result arrives with a later update)
@@ -664,7 +725,7 @@ class XploraWatch extends IPSModule
      * status and distance, location time and accuracy, address; optional map of the location in the background.
      * Sizes follow the tile size (container query units).
      */
-    private function TileHTML(array $d): string
+    private function TileHTML(array $d, bool $themeScript = true): string
     {
         $e = static fn (string $text): string => htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
         $ok = '#2ecc71';
@@ -792,7 +853,27 @@ class XploraWatch extends IPSModule
             . '<div class="xvs">' . $tiles . '</div>'
             . $address
             . '</div></div>'
-            . ($theme === 0 ? $this->ThemeScript('xw') : '');
+            . ($theme === 0 && $themeScript ? $this->ThemeScript('xw') : '');
+    }
+
+    private function InstanceTileActive(): bool
+    {
+        return $this->ReadPropertyBoolean('InstanceTile') && method_exists($this, 'UpdateVisualizationValue');
+    }
+
+    /**
+     * Message for the instance tile: HTML of the status tile without script (inserted with innerHTML, the tile page
+     * determines the design itself). $fresh = the location is newer than the last location request of the tile.
+     */
+    private function InstanceTileMessage(bool $fresh = false): array
+    {
+        $d = json_decode($this->ReadAttributeString('TileData'), true);
+        if (!is_array($d)) {
+            $text = $this->ReadPropertyString('WardID') === '' ? $this->Translate('No watch ID configured') : $this->Translate('No location yet');
+            return ['html' => '<div class="xw" style="height:100%;display:flex;align-items:center;justify-content:center;'
+                . 'font-family:\'Segoe UI\',Arial,sans-serif;color:#9aa5b1">' . htmlspecialchars($text, ENT_QUOTES, 'UTF-8') . '</div>', 'fresh' => $fresh];
+        }
+        return ['html' => $this->TileHTML($d, false), 'fresh' => $fresh];
     }
 
     /** Automatic design: follows the card/text colors that the tile visualization passes to HTML content, otherwise prefers-color-scheme. */

@@ -63,6 +63,7 @@ Tipp: Die Instanz „Xplora `<Name>`“ nennen, z. B. „Xplora Lena“ – Kach
 | Zweiter Ort: Standort | Standort des zweiten Orts; leer = kein zweiter Ort |
 | Zweiter Ort: Radius | Meter um den zweiten Ort (Standard 150, plus Genauigkeit der Ortung, max. 200 m Zuschlag) |
 | Statuskachel anlegen | HTML-Box „Statuskachel“ (Standard an) |
+| Instanz als Kachel | Die Instanz selbst kann als Kachel in die Kachel-Visualisierung gezogen werden (HTML-SDK): Statuskachel mit Knopf „Orten“ (fordert eine Ortung an, nach 60 s wird neu abgefragt) (Standard an) |
 | Ort statt „Unterwegs“ anzeigen | zeigt in Status- und Mini-Kachel unterwegs den Ort (Dorf/Stadt) der Ortung statt „Unterwegs“: von Xplora geliefert, sonst über OpenStreetMap Nominatim ermittelt (zwischengespeichert, neue Abfrage erst nach mehr als 300 m) (Standard an) |
 | Mini-Kachel anlegen | kleine HTML-Box „Mini-Kachel“ für eine kleine Kachel: Status (farbig), Akku in %, Abstand von zu Hause, Alter der Ortung („15 Min.“, aktualisiert sich im Browser; Abstand ohne Nachkommastellen, z. B. „12 km“) und Akkubalken (Standard aus) |
 | Karte als Hintergrund | Karte des Standorts hinter der Statuskachel (Standard an) |
@@ -82,6 +83,8 @@ Drosselung führen (siehe Xplora Cloud).
 
 * **Statuskachel:** Variable „Statuskachel“ in die Kachel-Visualisierung ziehen. Grün = zu Hause, orange = unterwegs
   (mit Abstand), violett = am zweiten Ort (zeigt dessen Namen), blau = geortet (ohne Zuhause). Darunter Akkubalken (⚡ beim Laden) und Ortungszeit.
+* **Instanz-Kachel:** Statt der Variable die Instanz „Xplora `<Name>`“ selbst in die Kachel-Visualisierung ziehen – gleicher Inhalt
+  wie die Statuskachel, zusätzlich Knopf „Orten“; aktualisiert sich ohne Neuladen.
 * **Verlauf:** Variable „Verlauf“ in die Visualisierung ziehen (eigene Seite oder große Kachel). Datum wählen,
   „Wiedergabe“ zeigt den Weg des Tages; lange Lücken werden dabei verkürzt. Der zweite Ort ist mit 📍 markiert,
   Aufenthalte dort werden mit seinem Namen aufgeführt.

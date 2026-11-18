@@ -112,6 +112,11 @@
         },
         {
             "type": "CheckBox",
+            "name": "InstanceTile",
+            "caption": "Instance as tile in the tile visualization (status tile with button \"Locate\")"
+        },
+        {
+            "type": "CheckBox",
             "name": "ShowPlaceName",
             "caption": "Show the town/village instead of \"On the way\" in the tiles"
         },
