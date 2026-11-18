@@ -79,6 +79,10 @@ Open the configurator. It lists all watches of the account. Select a watch → *
 
 After **Apply** the instance creates the variables and reads the first location immediately.
 
+This is what the history page looks like (map and places pixelated for the documentation):
+
+![History of one day](docs/verlauf.png)
+
 ### 6. Into the tile visualization
 
 Drag the variable **Status tile** (or **Mini tile** or **Map**) into the tile visualization and adjust the tile size

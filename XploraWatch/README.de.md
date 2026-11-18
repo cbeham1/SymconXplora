@@ -85,6 +85,8 @@ Drosselung führen (siehe Xplora Cloud).
   Aufenthalte dort werden mit seinem Namen aufgeführt.
   Alten Verlauf übernehmen: siehe `XPLW_ImportHistory`.
 
+  ![Verlauf eines Tages (Karte und Orte verpixelt)](../docs/verlauf.png)
+
 ### 7. Statusvariablen und Profile
 
 | Ident | Name | Typ | Profil |

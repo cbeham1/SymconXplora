@@ -79,6 +79,10 @@ Den Konfigurator öffnen. Er listet alle Uhren des Kontos. Uhr markieren → **E
 
 Nach **Übernehmen** legt die Instanz die Variablen an und liest sofort die erste Ortung.
 
+So sieht die Verlaufsseite aus (Karte und Orte für die Doku verpixelt):
+
+![Verlauf eines Tages](docs/verlauf.png)
+
 ### 6. In die Kachel-Visualisierung
 
 Die Variable **Statuskachel** (bzw. **Mini-Kachel** oder **Karte**) in die Kachel-Visualisierung ziehen und die
