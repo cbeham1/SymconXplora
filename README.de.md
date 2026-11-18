@@ -88,6 +88,14 @@ So sieht die Verlaufsseite aus (Karte und Orte für die Doku verpixelt):
 Die Variable **Statuskachel** (bzw. **Mini-Kachel** oder **Karte**) in die Kachel-Visualisierung ziehen und die
 Kachelgröße im Bearbeiten-Modus anpassen.
 
+Statuskachel (Ort, Karte und Name für die Doku verpixelt):
+
+![Statuskachel](docs/statuskachel.png)
+
+Beispiel einer Seite mit Statuskachel, einzelnen Variablen und Kartenvariable (verpixelt):
+
+![Seite in der Kachel-Visualisierung](docs/visualisierung.png)
+
 ## Fehlersuche
 
 | Meldung | Ursache und Abhilfe |

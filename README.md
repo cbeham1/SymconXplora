@@ -88,6 +88,14 @@ This is what the history page looks like (map and places pixelated for the docum
 Drag the variable **Status tile** (or **Mini tile** or **Map**) into the tile visualization and adjust the tile size
 in edit mode.
 
+Status tile (place, map and name pixelated for the documentation):
+
+![Status tile](docs/statuskachel.png)
+
+Example page with status tile, single variables and map variable (pixelated):
+
+![Page in the tile visualization](docs/visualisierung.png)
+
 ## Troubleshooting
 
 | Message | Cause and solution |

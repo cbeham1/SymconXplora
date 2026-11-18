@@ -78,6 +78,8 @@ Drosselung führen (siehe Xplora Cloud).
 
 ### 6. Statuskachel und Verlauf
 
+![Statuskachel (verpixelt)](../docs/statuskachel.png)
+
 * **Statuskachel:** Variable „Statuskachel“ in die Kachel-Visualisierung ziehen. Grün = zu Hause, orange = unterwegs
   (mit Abstand), violett = am zweiten Ort (zeigt dessen Namen), blau = geortet (ohne Zuhause). Darunter Akkubalken (⚡ beim Laden) und Ortungszeit.
 * **Verlauf:** Variable „Verlauf“ in die Visualisierung ziehen (eigene Seite oder große Kachel). Datum wählen,

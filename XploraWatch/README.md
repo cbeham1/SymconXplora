@@ -71,6 +71,8 @@ Best via the Xplora Configurator. Manually: "Add instance" → "Xplora Watch" an
 
 Xplora limits the number of requests. Short intervals and frequent location requests for several watches can lead to throttling (see Xplora Cloud).
 
+![Status tile (pixelated)](../docs/statuskachel.png)
+
 ![History of one day (map and places pixelated)](../docs/verlauf.png)
 
 ### 6. Status variables and profiles
