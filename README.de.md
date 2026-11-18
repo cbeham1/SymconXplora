@@ -29,7 +29,7 @@ Open-Source-Projekte [pyxplora_api](https://github.com/Ludy87/pyxplora_api) und
 
 ## Einrichtung im Überblick
 
-![Einrichtung im Überblick](docs/ablauf.de.svg)
+![Einrichtung im Überblick](docs/ablauf.de.png)
 
 ## Einrichtung Schritt für Schritt
 
@@ -48,7 +48,7 @@ Objektbaum → **Instanz hinzufügen** → **Xplora Configurator** → **OK**. I
 
 ### 3. Anmeldung in „Xplora Cloud“
 
-![Instanz Xplora Cloud](docs/cloud.de.svg)
+![Instanz Xplora Cloud](docs/cloud.de.png)
 
 1. Die Instanz „Xplora Cloud“ öffnen (I/O Instanzen bzw. im Konfigurator über „Gateway konfigurieren“).
 2. **Entweder** die E-Mail-Adresse **oder** Ländervorwahl (ohne „+“, z. B. 43 oder 49) und Telefonnummer ohne führende 0
@@ -58,21 +58,21 @@ Objektbaum → **Instanz hinzufügen** → **Xplora Configurator** → **OK**. I
 
 ### 4. Uhren anlegen
 
-![Xplora Configurator](docs/konfigurator.de.svg)
+![Xplora Configurator](docs/konfigurator.de.png)
 
 Den Konfigurator öffnen. Er listet alle Uhren des Kontos. Uhr markieren → **Erstellen**. Die Instanz heißt
-„Xplora <Name>“; Kachel und Verlauf zeigen den Namen ohne „Xplora“.
+„Xplora `<Name>`“; Kachel und Verlauf zeigen den Namen ohne „Xplora“.
 
 ### 5. Uhr einstellen
 
-![Instanz Xplora Watch](docs/uhr.de.svg)
+![Instanz Xplora Watch](docs/uhr.de.png)
 
 | Bereich | Empfehlung |
 | --- | --- |
 | Abfrageintervall | 300 s (Standard). Kürzer = aktueller, aber mehr Anfragen bei Xplora (Drosselung möglich) |
 | Neue Ortung anfordern | 0 = nie. Sonst bittet das Modul die Uhr um eine neue Ortung, wenn die letzte älter ist – kostet Akku |
 | Zuhause | „Standort von Symcon übernehmen“ (Location Control) oder eigene Adresse → **Finden**; Radius z. B. 150 m |
-| Zweiter Ort | Name (z. B. Schule), Adresse → **Finden**, Radius – erzeugt „<Name>“ und „Abstand zu <Name>“ |
+| Zweiter Ort | Name (z. B. Schule), Adresse → **Finden**, Radius – erzeugt „`<Name>`“ und „Abstand zu `<Name>`“ |
 | Statuskachel / Mini-Kachel | HTML-Variablen für die Kachel-Visualisierung; Design „Automatisch“ folgt dem Design der Visualisierung |
 | Kartenvariable | Karte mit Umschalter Karte/Satellit und „Zentrieren“ |
 | Verlauf | Orte je Tag mit Wiedergabe, Strecke und Aufenthalten (1–60 Tage) |

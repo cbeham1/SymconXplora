@@ -29,7 +29,7 @@ Xplora may change the API at any time.
 
 ## Setup at a glance
 
-![Setup at a glance](docs/ablauf.en.svg)
+![Setup at a glance](docs/ablauf.en.png)
 
 ## Setup step by step
 
@@ -48,7 +48,7 @@ instance under the I/O instances.
 
 ### 3. Log in in "Xplora Cloud"
 
-![Xplora Cloud instance](docs/cloud.en.svg)
+![Xplora Cloud instance](docs/cloud.en.png)
 
 1. Open the "Xplora Cloud" instance (I/O instances or "Configure gateway" in the configurator).
 2. Enter **either** the e-mail address **or** country code (without "+", e.g. 43 or 49) and phone number without the
@@ -58,21 +58,21 @@ instance under the I/O instances.
 
 ### 4. Create the watches
 
-![Xplora Configurator](docs/konfigurator.en.svg)
+![Xplora Configurator](docs/konfigurator.en.png)
 
 Open the configurator. It lists all watches of the account. Select a watch → **Create**. The instance is named
-"Xplora <name>"; tile and history show the name without "Xplora".
+"Xplora `<name>`"; tile and history show the name without "Xplora".
 
 ### 5. Configure the watch
 
-![Xplora Watch instance](docs/uhr.en.svg)
+![Xplora Watch instance](docs/uhr.en.png)
 
 | Area | Recommendation |
 | --- | --- |
 | Update interval | 300 s (default). Shorter = more current, but more requests at Xplora (throttling possible) |
 | Request a new location | 0 = never. Otherwise the module asks the watch for a new location when the last one is older – costs battery |
 | Home | "Use the location of Symcon" (Location Control) or own address → **Find**; radius e.g. 150 m |
-| Second place | name (e.g. School), address → **Find**, radius – creates "<name>" and "Distance to <name>" |
+| Second place | name (e.g. School), address → **Find**, radius – creates "`<name>`" and "Distance to `<name>`" |
 | Status tile / mini tile | HTML variables for the tile visualization; design "Automatic" follows the design of the visualization |
 | Map variable | map with map/satellite switch and "Center" |
 | History | places per day with replay, route and stays (1–60 days) |

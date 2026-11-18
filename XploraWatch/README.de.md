@@ -23,7 +23,7 @@ Zeigt Standort, Adresse, Sicherheitszone, Akku und Ladezustand einer Xplora-Uhr 
 * Sicherheitszone der Xplora-App, in der sich die Uhr befindet
 * Optional: Abstand zu Zuhause und „Zu Hause“ (Radius plus Genauigkeit der Ortung, max. 200 m Zuschlag)
 * Optional: **zweiter Ort** (z. B. Schule, Arbeit, 2. Heim) mit eigenem Namen, Standort und Radius – Variablen
-  „<Name>“ (anwesend/abwesend) und „Abstand zu <Name>“; Statuskachel und Verlauf zeigen den Ort mit an
+  „`<Name>`“ (anwesend/abwesend) und „Abstand zu `<Name>`“; Statuskachel und Verlauf zeigen den Ort mit an
 * Optional: fordert eine neue Ortung an, wenn die letzte zu alt ist (kostet etwas Akku der Uhr)
 * Optional: **Statuskachel** für die Kachel-Visualisierung (zu Hause / unterwegs, Abstand, Akku, Ortungszeit),
   mit heller bzw. dunkler Karte des Standorts als Hintergrund (Esri „Gray Canvas“ – Esri, HERE, Garmin, © OpenStreetMap;
@@ -46,7 +46,7 @@ Uhren, die mit der Xplora-Eltern-App genutzt werden können (getestet mit Xplora
 
 Am besten über den Xplora Configurator. Manuell: „Instanz hinzufügen“ → „Xplora Watch“ und die Uhren-ID eintragen.
 
-Tipp: Die Instanz „Xplora <Name>“ nennen, z. B. „Xplora Lena“ – Kachel und Verlauf zeigen dann „Lena“.
+Tipp: Die Instanz „Xplora `<Name>`“ nennen, z. B. „Xplora Lena“ – Kachel und Verlauf zeigen dann „Lena“.
 
 ### 5. Konfiguration
 
@@ -96,7 +96,7 @@ Drosselung führen (siehe Xplora Cloud).
 | AtHome | Zu Hause | Boolean | ~Presence |
 | Distance | Abstand zu Hause | Float | XPL.Kilometer |
 | AtPlace2 | <Name des zweiten Orts> | Boolean | ~Presence |
-| DistancePlace2 | Abstand zu <Name> | Float | XPL.Kilometer |
+| DistancePlace2 | Abstand zu `<Name>` | Float | XPL.Kilometer |
 | InSafeZone | In Sicherheitszone | Boolean | |
 | SafeZone | Sicherheitszone | String | |
 | Address | Adresse | String | |

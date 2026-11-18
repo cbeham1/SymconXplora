@@ -22,7 +22,7 @@ Shows location, address, safe zone, battery and charging state of one Xplora wat
 * Safe zone of the Xplora app the watch is in
 * Optional: distance to a home location and "At home" (home radius plus accuracy of the location, max. 200 m)
 * Optional: second place (e.g. school, work, second home) with its own name, location and radius – variables
-  "At <name>" and "Distance to <name>"; status tile and location history show the place as well
+  "At `<name>`" and "Distance to `<name>`"; status tile and location history show the place as well
 * Optional: asks the watch for a new location if the last one is too old (costs some battery of the watch)
 * Optional: status tile for the tile visualization (at home / on the way, distance, battery, time of the location),
   with a light map of the location as background (Esri "Light Gray Canvas" map tiles – Esri, HERE, Garmin, © OpenStreetMap contributors – loaded by the browser of the viewer)
@@ -81,8 +81,8 @@ Xplora limits the number of requests. Short intervals and frequent location requ
 | Charging   | Charging         | boolean |                |
 | AtHome     | At home          | boolean | ~Presence      |
 | Distance   | Distance to home | float   | XPL.Kilometer  |
-| AtPlace2   | At <name>        | boolean | ~Presence      |
-| DistancePlace2 | Distance to <name> | float | XPL.Kilometer |
+| AtPlace2   | At `<name>`        | boolean | ~Presence      |
+| DistancePlace2 | Distance to `<name>` | float | XPL.Kilometer |
 | InSafeZone | In safe zone     | boolean |                |
 | SafeZone   | Safe zone        | string  |                |
 | Address    | Address          | string  |                |
