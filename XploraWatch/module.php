@@ -49,6 +49,7 @@ class XploraWatch extends IPSModule
         $this->RegisterPropertyBoolean('ShowMap', true);
         $this->RegisterPropertyBoolean('ShowTile', true);
         $this->RegisterPropertyBoolean('InstanceTile', true);
+        $this->RegisterPropertyBoolean('TileRoute', true);
         $this->RegisterPropertyBoolean('ShowMiniTile', false);
         $this->RegisterPropertyBoolean('ShowPlaceName', true);
         $this->RegisterPropertyBoolean('TileMap', true);
@@ -183,6 +184,7 @@ class XploraWatch extends IPSModule
             'ago'      => $this->Translate('%s ago'),
             'address'  => $this->Translate('Address'),
             'dec'      => $this->Translate('.'),
+            'tracking' => $this->Translate('Signal tracking'),
             'map'      => $this->Translate('Map'),
             'sat'      => $this->Translate('Satellite'),
             'center'   => $this->Translate('Center'),
@@ -931,6 +933,8 @@ class XploraWatch extends IPSModule
             // Locations of the last 36 hours: track of today, "away since" and statistics of today (computed in the tile)
             'points'   => $this->ReadPropertyBoolean('ShowHistory') ? $this->RecentPoints(36 * 3600) : [],
             'history'  => $this->ReadPropertyBoolean('ShowHistory') ? $this->HookPath() . '?t=' . $this->ReadAttributeString('HookToken') : null,
+            // Day route shown in the tile, otherwise only a button "Signal tracking" that opens the history in the whole tile
+            'route'    => $this->ReadPropertyBoolean('TileRoute'),
         ];
     }
 

@@ -96,6 +96,8 @@
             "charging": "lädt",
             "%s ago": "vor %s",
             "Day route": "Tagesroute",
+            "Signal tracking": "Signalverfolgung",
+            "Show the day route in the instance tile (otherwise button \"Signal tracking\")": "Tagesroute in der Instanz-Kachel anzeigen (sonst Knopf „Signalverfolgung“)",
             "Request location": "Ortung anfordern",
             "Live": "Live",
             "away since %s": "unterwegs seit %s",

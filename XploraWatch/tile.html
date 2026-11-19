@@ -193,6 +193,7 @@
     wideNow = wide();
     var h = '<div class="xcol"><div class="xhero">' + ring(d.battery, d.charging) + '<div class="xst"><div class="xs" style="color:' + d.color + '">' + esc(d.status) + '</div>'
       + (sub ? '<div class="xu">' + esc(sub) + '</div>' : '') + '</div>'
+      + (d.history && !d.route ? '<button class="xbtn glass" id="xtrk">' + icon('route') + '<span>' + esc(T.tracking) + '</span></button>' : '')
       + '<button class="xbtn glass" id="xbtn"' + (busy ? ' disabled' : '') + '>' + icon('locate') + '<span>' + esc(busy ? T.pending : T.locate) + '</span></button></div>';
     h += '<div class="xvs">';
     var n = 0;
@@ -205,6 +206,7 @@
     }
     if (d.address) { h += box('addr', T.address, d.address, 'wide'); }
     C.innerHTML = h + '</div></div>' + (wideNow ? '<div class="xhp" id="xhp"></div>' : '');
+    if (document.getElementById('xtrk')) { document.getElementById('xtrk').onclick = function () { mode(true); }; }
     document.getElementById('xbtn').onclick = function () {
       pending = Date.now() + 120000;
       this.disabled = true;
@@ -301,7 +303,7 @@
 
   // History of the instance (WebHook page): large panel next to the infos on big tiles (date, replay),
   // otherwise small picture in picture above the infos; full view of the tile on click
-  function wide() { return !!(data && data.history) && W.clientWidth >= 1000 && W.clientHeight >= 560; }
+  function wide() { return !!(data && data.history && data.route) && W.clientWidth >= 1000 && W.clientHeight >= 560; }
   function history() {
     if (!data.history) { H.style.display = 'none'; return; }
     var src = data.history + '&embed=1&th=' + (dark ? 'dark' : 'light'), f = H.querySelector('iframe');
@@ -316,7 +318,10 @@
     if (fr && m !== hmode) { hmode = m; fr.postMessage({ xplora: 'mode', mode: m }, '*'); }
   }
   function placeHistory() {
+    if (data && data.history && full) { H.style.display = 'block'; }
     if (!data || !data.history || full) { sendMode(); return; }
+    // Day route switched off: history only in the whole tile (button "Signal tracking")
+    if (!data.route) { H.style.display = 'none'; sendMode(); return; }
     var w = W.clientWidth, top = contentTop(), mt = px('margintop', 12) + 44, slot = document.getElementById('xhp');
     if (slot) {
       var r = slot.getBoundingClientRect(), o = W.getBoundingClientRect();
