@@ -26,8 +26,11 @@ button.on{background:#e08a00;border-color:#e08a00;color:#fff}
 .home{font-size:22px;line-height:22px;text-align:center}
 /* Embedded in the instance tile: small picture-in-picture view without controls, or full view with button back to the live view */
 .mini .bar,.mini #stats,.mini .leaflet-control-container,.mini .leaflet-tooltip,.mini #leer{display:none!important}
-#close{display:none}.embed #close{display:inline-block}
-.embed body{background:transparent}
+#close,#expand{display:none}.embed #close{display:inline-block}
+.embed,.embed body{overflow:hidden;background:transparent}.embed #app>div{min-height:0}.embed #map{min-height:0}
+/* Panel next to the infos: date and replay, no statistics; button to open the full view */
+.pip #close,.pip #lgrp,.pip #tempo,.pip #stats{display:none!important}.pip #expand{display:inline-block}
+.pip .bar{padding:6px 8px;gap:6px}.pip button,.pip input[type=date]{padding:4px 8px;font-size:13px}
 #leer{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);z-index:500;background:rgba(0,0,0,.7);color:#fff;padding:10px 16px;border-radius:8px;display:none}
 </style></head>
 <body><div id="app">
@@ -35,7 +38,8 @@ button.on{background:#e08a00;border-color:#e08a00;color:#fff}
   <button id="close">✕ Live</button>
   <div class="grp"><button id="prev">◀</button><input type="date" id="datum"><button id="next">▶</button><button id="heute"></button></div>
   <span class="sp"></span>
-  <div class="grp"><button id="lKarte" class="on"></button><button id="lSat"></button><button id="zentr"></button></div>
+  <button id="expand">⤢</button>
+  <div class="grp" id="lgrp"><button id="lKarte" class="on"></button><button id="lSat"></button><button id="zentr"></button></div>
 </div>
 <div style="position:relative;flex:1;display:flex"><div id="map" style="flex:1"></div><div id="leer"></div></div>
 <div class="bar bot">
@@ -191,8 +195,10 @@ zeichne(true);
 setTimeout(()=>{ map.invalidateSize(); zentriere(); }, 300);
 // Instance tile: switch between picture-in-picture and full view
 document.getElementById('close').onclick=()=>parent.postMessage({xplora:'live'},'*');
+document.getElementById('expand').onclick=()=>parent.postMessage({xplora:'full'},'*');
 window.addEventListener('message', e=>{ if (!e.data || e.data.xplora!=='mode') return;
-  document.documentElement.classList.toggle('mini', e.data.mode==='mini'); if (e.data.mode==='mini') { stop(); tag=heute(); zeichne(false); }
+  document.documentElement.classList.toggle('mini', e.data.mode==='mini'); document.documentElement.classList.toggle('pip', e.data.mode==='pip');
+  if (e.data.mode==='mini') { stop(); tag=heute(); zeichne(false); }
   setTimeout(()=>{ map.invalidateSize(); zentriere(); }, 50); });
 window.addEventListener('resize', ()=>map.invalidateSize());
 // Reload every 5 minutes (new points) while today is shown and no replay is running

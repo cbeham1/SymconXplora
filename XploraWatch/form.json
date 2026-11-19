@@ -113,7 +113,7 @@
         {
             "type": "CheckBox",
             "name": "InstanceTile",
-            "caption": "Instance as tile in the tile visualization (status tile with button \"Locate\")"
+            "caption": "Instance as tile in the tile visualization (map, information, history, button \"Request location\")"
         },
         {
             "type": "CheckBox",

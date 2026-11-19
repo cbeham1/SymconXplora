@@ -172,7 +172,7 @@ class XploraWatch extends IPSModule
     public function GetVisualizationTile(): string
     {
         $texts = json_encode([
-            'locate'   => $this->Translate('Locate'),
+            'locate'   => $this->Translate('Request location'),
             'pending'  => $this->Translate('Location requested …'),
             'battery'  => $this->Translate('Battery'),
             'charging' => $this->Translate('charging'),
