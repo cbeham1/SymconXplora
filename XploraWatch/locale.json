@@ -97,6 +97,7 @@
             "%s ago": "vor %s",
             "Day route": "Tagesroute",
             "Signal tracking": "Signalverfolgung",
+            "Back to live view": "Zurück zur Liveansicht",
             "Show the day route in the instance tile (otherwise button \"Signal tracking\")": "Tagesroute in der Instanz-Kachel anzeigen (sonst Knopf „Signalverfolgung“)",
             "Request location": "Ortung anfordern",
             "Live": "Live",

@@ -78,7 +78,7 @@ Xplora limits the number of requests. Short intervals and frequent location requ
 **Instance tile:** drag the instance "Xplora `<name>`" itself into the tile visualization – map over the whole tile (zoom,
 map/satellite, center, track of today), information, button "Request location" and, with "Record location history", the
 **day route** (on big tiles a panel next to the information with date and replay, otherwise a picture-in-picture; ⤢ opens
-the history in the whole tile, "✕ Live" goes back). Updates without reloading.
+the history in the whole tile, "← Back to live view" goes back). Updates without reloading.
 
 ![Instance tile (pixelated)](../docs/instanzkachel.png)
 

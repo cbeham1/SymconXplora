@@ -91,7 +91,7 @@ Karte über die ganze Kachel (Zoom, Karte/Satellit, Zentrieren, Spur von heute),
 „zu Hause seit“, Werte-Kacheln (Abstände, Ortungszeit, Ortungsart, Genauigkeit, Sicherheitszone, Weg und Zeit außer Haus heute,
 Adresse), Knopf **„Ortung anfordern“** und – mit „Verlauf aufzeichnen“ – die **Tagesroute** mit Datumsauswahl und Wiedergabe.
 Die Kachel passt sich der Größe an: auf großen Kacheln steht die Tagesroute als Feld neben den Infos, sonst als Bild-in-Bild;
-⤢ öffnet den Verlauf in der ganzen Kachel, „✕ Live“ führt zurück.
+⤢ öffnet den Verlauf in der ganzen Kachel, „← Zurück zur Liveansicht“ führt zurück.
 
 Instanz-Kachel (Karten, Ort und Name für die Doku verpixelt):
 

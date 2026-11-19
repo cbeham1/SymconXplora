@@ -47,7 +47,7 @@ button.on{background:#e08a00;border-color:#e08a00;color:#fff}
 </style></head>
 <body><div id="app">
 <div class="bar">
-  <button id="close">✕ Live</button><span id="ttl"></span>
+  <button id="close"></button><span id="ttl"></span>
   <div class="grp"><button id="prev">◀</button><input type="date" id="datum"><button id="next">▶</button><button id="heute"></button></div>
   <span class="sp"></span>
   <button id="expand">⤢</button>
@@ -77,6 +77,7 @@ const len = m => m < 1000 ? Math.round(m) + ' m' : dec(m / 1000, 1) + ' km';
 document.getElementById('leer').textContent = T.empty;
 document.getElementById('heute').textContent = T.today;
 document.getElementById('ttl').textContent = T.title;
+document.getElementById('close').textContent = '← ' + T.back;
 document.getElementById('prev').title = T.prev;
 document.getElementById('next').title = T.next;
 document.getElementById('lKarte').textContent = T.map;

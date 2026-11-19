@@ -89,7 +89,7 @@ Drosselung führen (siehe Xplora Cloud).
   Karte mit Zoom, Karte/Satellit, Zentrieren und der Spur von heute; „unterwegs seit“/„zu Hause seit“, Weg und Zeit außer Haus heute.
   Mit „Verlauf aufzeichnen“ zeigt die Kachel die **Tagesroute** – auf großen Kacheln als Feld neben den Infos mit Datum und
   Wiedergabe, sonst rechts unten als Bild-in-Bild. ⤢ bzw. ein Klick öffnet den Verlauf (Datum, Wiedergabe, Statistik) in der
-  ganzen Kachel, „✕ Live“ führt zurück.
+  ganzen Kachel, „← Zurück zur Liveansicht“ führt zurück.
 
   ![Statuskachel (verpixelt)](../docs/statuskachel.png)
 

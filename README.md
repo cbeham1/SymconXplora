@@ -91,7 +91,7 @@ map over the whole tile (zoom, map/satellite, center, track of today), battery r
 "at home since", value boxes (distances, location time, location type, accuracy, safe zone, route and time away today,
 address), button **"Request location"** and – with "Record location history" – the **day route** with date selection and replay.
 The tile adapts to its size: on big tiles the day route is a panel next to the information, otherwise a picture-in-picture;
-⤢ opens the history in the whole tile, "✕ Live" goes back.
+⤢ opens the history in the whole tile, "← Back to live view" goes back.
 
 Instance tile (maps, place and name pixelated for the documentation):
 
