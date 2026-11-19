@@ -86,7 +86,7 @@ Drosselung führen (siehe Xplora Cloud).
 * **Instanz-Kachel:** Statt der Variable die Instanz „Xplora `<Name>`“ selbst in die Kachel-Visualisierung ziehen – Karte über die ganze Kachel,
   mehr Werte als die Statuskachel und Knopf „Ortung anfordern“; aktualisiert sich ohne Neuladen.
   Karte mit Zoom, Karte/Satellit, Zentrieren und der Spur von heute; „unterwegs seit“/„zu Hause seit“, Weg und Zeit außer Haus heute.
-  Mit „Verlauf aufzeichnen“ zeigt die Kachel den Verlauf – auf großen Kacheln als großes Feld neben den Infos mit Datum und Wiedergabe, sonst rechts unten als Bild-in-Bild – ein Klick öffnet die Verfolgung
+  Mit „Verlauf aufzeichnen“ zeigt die Kachel den Verlauf – auf großen Kacheln als großes Feld neben den Infos mit Datum und Wiedergabe, sonst rechts unten als Bild-in-Bild („Tagesroute“) – ein Klick öffnet die Verfolgung
   (Datum, Wiedergabe, Statistik) in der Kachel, „✕ Live“ führt zurück.
 * **Verlauf:** Variable „Verlauf“ in die Visualisierung ziehen (eigene Seite oder große Kachel). Datum wählen,
   „Wiedergabe“ zeigt den Weg des Tages; lange Lücken werden dabei verkürzt. Der zweite Ort ist mit 📍 markiert,

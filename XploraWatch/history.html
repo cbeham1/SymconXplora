@@ -30,9 +30,14 @@ button.on{background:#e08a00;border-color:#e08a00;color:#fff}
 .embed,.embed body{overflow:hidden;background:transparent}.embed #app>div{min-height:0}.embed #map{min-height:0}
 /* Panel next to the infos: date and replay, no statistics; button to open the full view */
 .pip #close,.pip #lgrp,.pip #tempo,.pip #stats{display:none!important}.pip #expand{display:inline-block}
-.pip .bar{padding:6px 8px;gap:6px;background:transparent;border:0}.pip button,.pip input[type=date]{padding:4px 8px;font-size:13px}
-.pip #map{-webkit-mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent),linear-gradient(to bottom,transparent,#000 6%,#000 94%,transparent);
-  -webkit-mask-composite:source-in;mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent),linear-gradient(to bottom,transparent,#000 6%,#000 94%,transparent);mask-composite:intersect}
+.pip .bar{padding:6px 10px;gap:6px;background:transparent;border:0}
+.pip button,.pip input[type=date]{padding:3px 8px;font-size:12px;background:transparent;border-color:transparent;color:var(--sub)}
+.pip button:hover,.pip input[type=date]:hover{background:var(--btn);color:var(--fg)}
+.pip #slider{opacity:.7}.pip #zeit{font-size:13px;color:var(--sub)}
+#ttl{display:none;color:var(--sub);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-right:4px}.pip #ttl,.mini #ttl{display:inline}
+.pip .leaflet-tile-pane{opacity:.7}
+.pip #map{-webkit-mask-image:linear-gradient(to right,transparent,#000 12%,#000 88%,transparent),linear-gradient(to bottom,transparent,#000 12%,#000 88%,transparent);
+  -webkit-mask-composite:source-in;mask-image:linear-gradient(to right,transparent,#000 12%,#000 88%,transparent),linear-gradient(to bottom,transparent,#000 12%,#000 88%,transparent);mask-composite:intersect}
 .pip .leaflet-control-zoom,.pip .leaflet-control-attribution{display:none}
 .embed .leaflet-container{background:transparent;outline:0}
 /* Dark design: street map darkened so that it fits the dark tile */
@@ -42,7 +47,7 @@ button.on{background:#e08a00;border-color:#e08a00;color:#fff}
 </style></head>
 <body><div id="app">
 <div class="bar">
-  <button id="close">✕ Live</button>
+  <button id="close">✕ Live</button><span id="ttl"></span>
   <div class="grp"><button id="prev">◀</button><input type="date" id="datum"><button id="next">▶</button><button id="heute"></button></div>
   <span class="sp"></span>
   <button id="expand">⤢</button>
@@ -71,6 +76,7 @@ const dec = (v, n) => v.toLocaleString(D.lang, {minimumFractionDigits: n, maximu
 const len = m => m < 1000 ? Math.round(m) + ' m' : dec(m / 1000, 1) + ' km';
 document.getElementById('leer').textContent = T.empty;
 document.getElementById('heute').textContent = T.today;
+document.getElementById('ttl').textContent = T.title;
 document.getElementById('prev').title = T.prev;
 document.getElementById('next').title = T.next;
 document.getElementById('lKarte').textContent = T.map;
@@ -103,7 +109,7 @@ if (D.place2) L.marker(D.place2.pos,{icon:L.divIcon({className:'home',html:'📍
 let mover = null, trail = null;
 
 // Track color: the same bright yellow as on the map of the instance tile
-function farbe(f){ return '#ffd23f'; }
+function farbe(f){ return '#ff8c1a'; }
 
 function zeichne(fit){
   stop(); gStrecke.clearLayers(); gPlay.clearLayers(); mover=null; trail=null;
