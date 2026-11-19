@@ -2,7 +2,7 @@
 
 [Deutsche Anleitung](README.de.md)
 
-Shows location, address, safe zone, battery and charging state of one Xplora watch.
+Shows location, address, safe zone, battery and charging state of one Xplora watch – as instance tile for the tile visualization, optionally with status tile and location history.
 
 ### Table of contents
 
@@ -24,6 +24,8 @@ Shows location, address, safe zone, battery and charging state of one Xplora wat
 * Optional: second place (e.g. school, work, second home) with its own name, location and radius – variables
   "At `<name>`" and "Distance to `<name>`"; status tile and location history show the place as well
 * Optional: asks the watch for a new location if the last one is too old (costs some battery of the watch)
+* Instance tile (HTML-SDK): the instance itself as tile – interactive map (Esri, Leaflet from cdnjs), information,
+  day route with date and replay, button "Request location"
 * Optional: status tile for the tile visualization (at home / on the way, distance, battery, time of the location),
   with a light map of the location as background (Esri "Light Gray Canvas" map tiles – Esri, HERE, Garmin, © OpenStreetMap contributors – loaded by the browser of the viewer)
 * Optional: map as HTML box (Leaflet from cdnjs) with switch map (OpenStreetMap embed) / satellite (Esri World Imagery, no key needed) and "Center"
@@ -72,6 +74,13 @@ Best via the Xplora Configurator. Manually: "Add instance" → "Xplora Watch" an
 
 Xplora limits the number of requests. Short intervals and frequent location requests for several watches can lead to throttling (see Xplora Cloud).
 
+**Instance tile:** drag the instance "Xplora `<name>`" itself into the tile visualization – map over the whole tile (zoom,
+map/satellite, center, track of today), information, button "Request location" and, with "Record location history", the
+**day route** (on big tiles a panel next to the information with date and replay, otherwise a picture-in-picture; ⤢ opens
+the history in the whole tile, "✕ Live" goes back). Updates without reloading.
+
+![Instance tile (pixelated)](../docs/instanzkachel.png)
+
 ![Status tile (pixelated)](../docs/statuskachel.png)
 
 ![History of one day (map and places pixelated)](../docs/verlauf.png)
@@ -97,7 +106,6 @@ Xplora limits the number of requests. Short intervals and frequent location requ
 | LocateType | Location type    | string  |                |
 | LocateTime | Location time    | integer | ~UnixTimestamp |
 | Map        | Map              | string  | ~HTMLBox       |
-
 | History    | Location history | string  | ~HTMLBox       |
 
 "At home" and "Distance to home" exist only with a home location, the two variables of the second place only with its

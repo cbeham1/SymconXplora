@@ -2,7 +2,7 @@
 
 Einbindung von Xplora-Kinder-Smartwatches über die Xplora-Cloud (derselbe Dienst, den die Xplora-Eltern-App nutzt):
 Standort, Adresse, Sicherheitszone, Akku und Ladezustand, Abstand und „Zu Hause“ bzw. an einem zweiten Ort,
-Statuskachel, Karte und Positionsverlauf.
+Instanz-Kachel für die Kachel-Visualisierung (Karte, Infos, Tagesroute), Statuskachel, Karte und Positionsverlauf.
 
 [English version](README.md)
 
@@ -19,7 +19,7 @@ Open-Source-Projekte [pyxplora_api](https://github.com/Ludy87/pyxplora_api) und
 | --- | --- |
 | [Xplora Cloud](XploraCloud/README.de.md) | Anmeldung am Xplora-Elternkonto, Verbindung zur Cloud (eine Instanz je Konto) |
 | [Xplora Configurator](XploraConfigurator/README.de.md) | listet die Uhren des Kontos und legt die Uhren-Instanzen an |
-| [Xplora Watch](XploraWatch/README.de.md) | eine Uhr: Standort, Adresse, Sicherheitszone, Akku, Ladezustand, Statuskachel, Karte, Verlauf |
+| [Xplora Watch](XploraWatch/README.de.md) | eine Uhr: Standort, Adresse, Sicherheitszone, Akku, Ladezustand, Instanz-Kachel, Statuskachel, Karte, Verlauf |
 
 ## Voraussetzungen
 
@@ -73,6 +73,7 @@ Den Konfigurator öffnen. Er listet alle Uhren des Kontos. Uhr markieren → **E
 | Neue Ortung anfordern | 0 = nie. Sonst bittet das Modul die Uhr um eine neue Ortung, wenn die letzte älter ist – kostet Akku |
 | Zuhause | „Standort von Symcon übernehmen“ (Location Control) oder eigene Adresse → **Finden**; Radius z. B. 150 m |
 | Zweiter Ort | Name (z. B. Schule), Adresse → **Finden**, Radius – erzeugt „`<Name>`“ und „Abstand zu `<Name>`“ |
+| Instanz als Kachel | die Instanz selbst als Kachel (Karte, Infos, Tagesroute, „Ortung anfordern“) – Standard an |
 | Statuskachel / Mini-Kachel | HTML-Variablen für die Kachel-Visualisierung; Design „Automatisch“ folgt dem Design der Visualisierung |
 | Kartenvariable | Karte mit Umschalter Karte/Satellit und „Zentrieren“ |
 | Verlauf | Orte je Tag mit Wiedergabe, Strecke und Aufenthalten (1–60 Tage) |
@@ -85,7 +86,18 @@ So sieht die Verlaufsseite aus (Karte und Orte für die Doku verpixelt):
 
 ### 6. In die Kachel-Visualisierung
 
-Die Variable **Statuskachel** (bzw. **Mini-Kachel** oder **Karte**) in die Kachel-Visualisierung ziehen und die
+Die **Instanz „Xplora `<Name>`“ selbst** in die Kachel-Visualisierung ziehen (empfohlen, Einstellung „Instanz als Kachel“):
+Karte über die ganze Kachel (Zoom, Karte/Satellit, Zentrieren, Spur von heute), Akku-Ring, Status mit „unterwegs seit“ bzw.
+„zu Hause seit“, Werte-Kacheln (Abstände, Ortungszeit, Ortungsart, Genauigkeit, Sicherheitszone, Weg und Zeit außer Haus heute,
+Adresse), Knopf **„Ortung anfordern“** und – mit „Verlauf aufzeichnen“ – die **Tagesroute** mit Datumsauswahl und Wiedergabe.
+Die Kachel passt sich der Größe an: auf großen Kacheln steht die Tagesroute als Feld neben den Infos, sonst als Bild-in-Bild;
+⤢ öffnet den Verlauf in der ganzen Kachel, „✕ Live“ führt zurück.
+
+Instanz-Kachel (Karten, Ort und Name für die Doku verpixelt):
+
+![Instanz-Kachel](docs/instanzkachel.png)
+
+Alternativ die Variable **Statuskachel** (bzw. **Mini-Kachel** oder **Karte**) in die Kachel-Visualisierung ziehen und die
 Kachelgröße im Bearbeiten-Modus anpassen.
 
 Statuskachel (Ort, Karte und Name für die Doku verpixelt):

@@ -2,7 +2,7 @@
 
 Integration of Xplora kids smartwatches via the Xplora cloud (the same service the Xplora parent app uses):
 location, address, safe zone, battery and charging state, distance and "at home" or at a second place,
-status tile, map and location history.
+instance tile for the tile visualization (map, information, day route), status tile, map and location history.
 
 [Deutsche Anleitung](README.de.md)
 
@@ -19,7 +19,7 @@ Xplora may change the API at any time.
 | --- | --- |
 | [Xplora Cloud](XploraCloud/README.md) | login to the Xplora parent account, connection to the cloud (one instance per account) |
 | [Xplora Configurator](XploraConfigurator/README.md) | lists the watches of the account and creates the watch instances |
-| [Xplora Watch](XploraWatch/README.md) | one watch: location, address, safe zone, battery, charging, status tile, map, history |
+| [Xplora Watch](XploraWatch/README.md) | one watch: location, address, safe zone, battery, charging, instance tile, status tile, map, history |
 
 ## Requirements
 
@@ -73,6 +73,7 @@ Open the configurator. It lists all watches of the account. Select a watch → *
 | Request a new location | 0 = never. Otherwise the module asks the watch for a new location when the last one is older – costs battery |
 | Home | "Use the location of Symcon" (Location Control) or own address → **Find**; radius e.g. 150 m |
 | Second place | name (e.g. School), address → **Find**, radius – creates "`<name>`" and "Distance to `<name>`" |
+| Instance as tile | the instance itself as tile (map, information, day route, "Request location") – default on |
 | Status tile / mini tile | HTML variables for the tile visualization; design "Automatic" follows the design of the visualization |
 | Map variable | map with map/satellite switch and "Center" |
 | History | places per day with replay, route and stays (1–60 days) |
@@ -85,7 +86,18 @@ This is what the history page looks like (map and places pixelated for the docum
 
 ### 6. Into the tile visualization
 
-Drag the variable **Status tile** (or **Mini tile** or **Map**) into the tile visualization and adjust the tile size
+Drag the **instance "Xplora `<name>`" itself** into the tile visualization (recommended, setting "Instance as tile"):
+map over the whole tile (zoom, map/satellite, center, track of today), battery ring, status with "away since" or
+"at home since", value boxes (distances, location time, location type, accuracy, safe zone, route and time away today,
+address), button **"Request location"** and – with "Record location history" – the **day route** with date selection and replay.
+The tile adapts to its size: on big tiles the day route is a panel next to the information, otherwise a picture-in-picture;
+⤢ opens the history in the whole tile, "✕ Live" goes back.
+
+Instance tile (maps, place and name pixelated for the documentation):
+
+![Instance tile](docs/instanzkachel.png)
+
+Alternatively drag the variable **Status tile** (or **Mini tile** or **Map**) into the tile visualization and adjust the tile size
 in edit mode.
 
 Status tile (place, map and name pixelated for the documentation):
