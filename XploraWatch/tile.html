@@ -75,8 +75,9 @@
   #xh iframe { width: 100%; height: 100%; border: 0; display: block; }
   #xh .cover { position: absolute; inset: 0; cursor: pointer; }
   #xh.pip .cover, #xh.pip .lbl { display: none; }
-  /* Panel next to the infos: no frame, the history page fades its map out at the edges */
-  #xh.pip { border: 0; box-shadow: none; background: transparent; border-radius: 0; }
+  /* Panel next to the infos: wide glass frame, the history page fades its map softly into it */
+  #xh.pip { border: 10px solid var(--box); border-radius: 22px; background: var(--bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 10px 34px rgba(0, 0, 0, .5), 0 0 0 1px var(--line); }
   #xh .lbl { position: absolute; left: 8px; bottom: 8px; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; pointer-events: none; }
   #xw.full #xh { left: var(--ms) !important; right: var(--ms) !important; top: var(--mt) !important; bottom: var(--mb) !important; width: auto !important; height: auto !important; }
   #xw.full #xh .cover, #xw.full #xh .lbl, #xw.full #xc, #xw.full #xctl { display: none; }
