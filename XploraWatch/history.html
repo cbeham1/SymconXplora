@@ -102,7 +102,8 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>'
 if (D.place2) L.marker(D.place2.pos,{icon:L.divIcon({className:'home',html:'📍',iconSize:[24,24]})}).bindTooltip(esc(D.place2.name)).addTo(map);
 let mover = null, trail = null;
 
-function farbe(f){ return 'hsl('+(45-35*f)+',95%,'+(68-38*f)+'%)'; }
+// Track color: the same bright yellow as on the map of the instance tile
+function farbe(f){ return '#ffd23f'; }
 
 function zeichne(fit){
   stop(); gStrecke.clearLayers(); gPlay.clearLayers(); mover=null; trail=null;
