@@ -92,7 +92,10 @@
             "Instance as tile in the tile visualization (status tile with button \"Locate\")": "Instanz als Kachel in der Kachel-Visualisierung (Statuskachel mit Knopf „Orten“)",
             "Locate": "Orten",
             "Location requested …": "Ortung angefordert …",
-            "No location yet": "Noch keine Ortung"
+            "No location yet": "Noch keine Ortung",
+            "outside": "außerhalb",
+            "charging": "lädt",
+            "%s ago": "vor %s"
         }
     }
 }

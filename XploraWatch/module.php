@@ -165,32 +165,30 @@ class XploraWatch extends IPSModule
         }
     }
 
-    /** HTML-SDK: instance tile, same content as the status tile; updates arrive via handleMessage(). */
+    /**
+     * HTML-SDK: instance tile. The page renders the data of InstanceTileMessage() itself (map over the whole tile,
+     * battery ring, status, value boxes); updates arrive via handleMessage() without reloading.
+     */
     public function GetVisualizationTile(): string
     {
         $texts = json_encode([
-            'locate'  => $this->Translate('Locate'),
-            'pending' => $this->Translate('Location requested …'),
+            'locate'   => $this->Translate('Locate'),
+            'pending'  => $this->Translate('Location requested …'),
+            'battery'  => $this->Translate('Battery'),
+            'charging' => $this->Translate('charging'),
+            'now'      => $this->Translate('now'),
+            'min'      => $this->Translate('%d min'),
+            'h'        => $this->Translate('%d h'),
+            'd'        => $this->Translate('%d d'),
+            'ago'      => $this->Translate('%s ago'),
+            'address'  => $this->Translate('Address'),
         ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG);
         $initial = json_encode($this->InstanceTileMessage(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-        return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-            . '<style>html,body{margin:0;height:100%;background:transparent;overflow:hidden}#xroot{height:100%}'
-            . '.xbtn{margin-left:auto;flex:none;border:1px solid var(--line);background:var(--box);color:var(--fg);border-radius:20px;'
-            . 'padding:3px 11px;font:600 clamp(11px,3.2cqw,13px) "Segoe UI",Arial,sans-serif;white-space:nowrap;cursor:pointer}'
-            . '.xbtn:disabled{opacity:.6;cursor:default}</style></head>'
-            . '<body><div id="xroot"></div><script>(function(){var T=' . $texts . ',root=document.getElementById("xroot"),pending=0;'
-            . 'function theme(){var s=getComputedStyle(document.documentElement);'
-            . 'function l(n){var v=s.getPropertyValue(n).replace(/[^0-9a-f]/gi,"");if(v.length<6){return -1;}'
-            . 'v=v.length===8&&/^ff/i.test(v)?v.slice(2):v.slice(0,6);var c=parseInt(v,16);return 0.299*(c>>16)+0.587*(c>>8&255)+0.114*(c&255);}'
-            . 'var b=l("--card-color"),f=l("--content-color");if(b<0){return;}'
-            . 'root.querySelectorAll(".xw").forEach(function(e){e.classList.add(b<(f<0?128:f)?"vd":"vl");});}'
-            . 'function button(){var h=root.querySelector(".xh");if(!h){return;}var b=document.createElement("button");b.className="xbtn";'
-            . 'b.textContent=pending>Date.now()?T.pending:T.locate;b.disabled=pending>Date.now();'
-            . 'b.onclick=function(){pending=Date.now()+120000;b.disabled=true;b.textContent=T.pending;requestAction("Locate",true);};'
-            . 'h.insertBefore(b,h.querySelector(".xch"));}'
-            . 'window.handleMessage=function(data){var d=JSON.parse(data);if(d.html===undefined){return;}'
-            . 'if(d.fresh){pending=0;}root.innerHTML=d.html;theme();button();};'
-            . '})();handleMessage(' . json_encode($initial, JSON_HEX_TAG) . ');</script></body></html>';
+        return strtr((string) file_get_contents(__DIR__ . '/tile.html'), [
+            '%TEXTS%'   => $texts,
+            '%THEME%'   => (string) $this->ReadPropertyInteger('TileTheme'),
+            '%INITIAL%' => json_encode($initial, JSON_HEX_TAG),
+        ]);
     }
 
     public function ReceiveData($JSONString): string
@@ -268,19 +266,20 @@ class XploraWatch extends IPSModule
             $this->AddHistoryPoint($time, $latitude, $longitude, $accuracy, (string) ($location['locateType'] ?? ''));
         }
         $tileData = [
-            'battery'  => isset($location['battery']) ? max(0, min(100, (int) $location['battery'])) : null,
-            'charging' => (bool) ($location['isCharging'] ?? false),
-            'atHome'   => $atHome,
-            'distance' => $distance,
-            'atPlace2' => $atPlace2,
-            'zone'     => (bool) ($location['isInSafeZone'] ?? false) ? (string) ($location['safeZoneLabel'] ?? '') : '',
-            'time'     => $time,
-            'type'     => (string) ($location['locateType'] ?? ''),
-            'lat'      => $latitude,
-            'lng'      => $longitude,
-            'address'  => $address,
-            'accuracy' => $accuracy,
-            'place'    => '',
+            'battery'   => isset($location['battery']) ? max(0, min(100, (int) $location['battery'])) : null,
+            'charging'  => (bool) ($location['isCharging'] ?? false),
+            'atHome'    => $atHome,
+            'distance'  => $distance,
+            'atPlace2'  => $atPlace2,
+            'distance2' => $distance2,
+            'zone'      => (bool) ($location['isInSafeZone'] ?? false) ? (string) ($location['safeZoneLabel'] ?? '') : '',
+            'time'      => $time,
+            'type'      => (string) ($location['locateType'] ?? ''),
+            'lat'       => $latitude,
+            'lng'       => $longitude,
+            'address'   => $address,
+            'accuracy'  => $accuracy,
+            'place'     => '',
         ];
         // Name of the town/village instead of "On the way" (only needed for the tiles and only when away)
         if (($this->ReadPropertyBoolean('ShowTile') || $this->ReadPropertyBoolean('ShowMiniTile') || $this->ReadPropertyBoolean('InstanceTile'))
@@ -725,7 +724,7 @@ class XploraWatch extends IPSModule
      * status and distance, location time and accuracy, address; optional map of the location in the background.
      * Sizes follow the tile size (container query units).
      */
-    private function TileHTML(array $d, bool $themeScript = true): string
+    private function TileHTML(array $d): string
     {
         $e = static fn (string $text): string => htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
         $ok = '#2ecc71';
@@ -853,7 +852,7 @@ class XploraWatch extends IPSModule
             . '<div class="xvs">' . $tiles . '</div>'
             . $address
             . '</div></div>'
-            . ($theme === 0 && $themeScript ? $this->ThemeScript('xw') : '');
+            . ($theme === 0 ? $this->ThemeScript('xw') : '');
     }
 
     private function InstanceTileActive(): bool
@@ -862,19 +861,58 @@ class XploraWatch extends IPSModule
     }
 
     /**
-     * Message for the instance tile: HTML of the status tile without script (inserted with innerHTML, the tile page
-     * determines the design itself). $fresh = the location is newer than the last location request of the tile.
+     * Message for the instance tile: texts and values of the last location (rendered by tile.html).
+     * $fresh = the location is newer than the last location request of the tile.
      */
     private function InstanceTileMessage(bool $fresh = false): array
     {
         $d = json_decode($this->ReadAttributeString('TileData'), true);
         if (!is_array($d)) {
             $text = $this->ReadPropertyString('WardID') === '' ? $this->Translate('No watch ID configured') : $this->Translate('No location yet');
-            $html = '<div class="xw" style="height:100%;display:flex;align-items:center;justify-content:center;'
-                . 'font-family:\'Segoe UI\',Arial,sans-serif;color:#9aa5b1">' . htmlspecialchars($text, ENT_QUOTES, 'UTF-8') . '</div>';
-            return ['html' => $html, 'fresh' => $fresh];
+            return ['empty' => $text, 'fresh' => $fresh];
         }
-        return ['html' => $this->TileHTML($d, false), 'fresh' => $fresh];
+        $dec = $this->Translate('.');
+        $km = static fn (float $m): string => $m < 1000 ? sprintf('%d m', (int) round($m)) : number_format($m / 1000, $m < 10000 ? 1 : 0, $dec, '') . ' km';
+        [$status, $color] = $this->StatusInfo($d);
+
+        $sub = '';
+        if (($d['distance'] ?? null) !== null && $d['atHome'] !== true) {
+            $sub = sprintf($this->Translate('%s from home'), $km((float) $d['distance']));
+        } elseif ($d['zone'] !== '') {
+            $sub = $d['zone'];
+        }
+        $type = strtoupper($d['type']) === 'WIFI' ? 'WLAN' : $d['type'];
+
+        // Value boxes: icon, caption, value (empty values are left out)
+        $values = [];
+        if (($d['distance'] ?? null) !== null) {
+            $values[] = ['home', $this->Translate('Distance to home'), $d['atHome'] ? $this->Translate('At home') : $km((float) $d['distance'])];
+        }
+        if (($d['distance2'] ?? null) !== null) {
+            $values[] = ['pin', sprintf($this->Translate('Distance to %s'), $this->GetPlace2Name()), $d['atPlace2'] ? sprintf($this->Translate('At %s'), $this->GetPlace2Name()) : $km((float) $d['distance2'])];
+        }
+        $values[] = ['clock', $this->Translate('Location time'), $d['time'] > 0 ? (date('Ymd', $d['time']) === date('Ymd') ? date('H:i', $d['time']) : date('d.m. H:i', $d['time'])) : '–', 'age'];
+        if ($type !== '') {
+            $values[] = ['signal', $this->Translate('Location type'), $type];
+        }
+        $values[] = ['target', $this->Translate('Accuracy'), '± ' . (int) $d['accuracy'] . ' m'];
+        $values[] = ['shield', $this->Translate('Safe zone'), $d['zone'] !== '' ? $d['zone'] : $this->Translate('outside')];
+
+        return [
+            'fresh'    => $fresh,
+            'name'     => $this->GetWatchName(),
+            'status'   => $status,
+            'color'    => $color,
+            'sub'      => $sub,
+            'battery'  => $d['battery'],
+            'charging' => (bool) $d['charging'],
+            'time'     => (int) $d['time'],
+            'values'   => $values,
+            'address'  => $d['address'],
+            'lat'      => (float) $d['lat'],
+            'lng'      => (float) $d['lng'],
+            'accuracy' => (int) $d['accuracy'],
+        ];
     }
 
     /** Automatic design: follows the card/text colors that the tile visualization passes to HTML content, otherwise prefers-color-scheme. */

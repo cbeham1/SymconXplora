@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0 !important; height: 100%; overflow: hidden; background: transparent; }
+  #xw { position: fixed; inset: 0; container-type: size; overflow: hidden; color: var(--fg); background: var(--bg); font-family: inherit; }
+  #xw * { box-sizing: border-box; }
+  #xw.vd { --bg: #1d2228; --fg: #e8edf2; --sub: #9aa5b1; --box: rgba(30, 36, 43, .72); --line: rgba(255, 255, 255, .08); --track: rgba(255, 255, 255, .1); }
+  #xw.vl { --bg: #ffffff; --fg: #1f2933; --sub: #5b6672; --box: rgba(255, 255, 255, .78); --line: rgba(0, 0, 0, .08); --track: rgba(0, 0, 0, .08); }
+
+  /* Map over the whole tile, faded into the card color below the location */
+  #xm { position: absolute; inset: 0; overflow: hidden; }
+  #xm img { position: absolute; width: 256px; height: 256px; display: block; user-select: none; }
+  #xo { position: absolute; left: 0; right: 0; bottom: 0; }
+  #xacc { position: absolute; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+  #xpin { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; border: 3px solid #fff; }
+  #xpin::after { content: ""; position: absolute; inset: -9px; border-radius: 50%; border: 2px solid currentColor; opacity: 0; animation: xpulse 2.4s ease-out infinite; }
+  @keyframes xpulse { 0% { transform: scale(.4); opacity: .9; } 100% { transform: scale(1.8); opacity: 0; } }
+  #xatt { position: absolute; right: 6px; font-size: 9px; color: var(--sub); opacity: .7; }
+
+  /* Content inside the margins of the tile visualization (tile name at the top) */
+  #xc { position: absolute; left: var(--ms); right: var(--ms); bottom: var(--mb); display: flex; flex-direction: column; gap: clamp(6px, 1.6cqh, 12px); }
+  .xhero { display: flex; align-items: center; gap: clamp(10px, 2.5cqw, 20px); }
+  .xring { width: clamp(64px, min(16cqw, 22cqh), 124px); height: auto; flex: none; }
+  .xst { min-width: 0; flex: 1; }
+  .xs { font-weight: 700; font-size: clamp(20px, min(6cqw, 9cqh), 44px); line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .xu { color: var(--sub); font-size: clamp(12px, min(2.6cqw, 4cqh), 16px); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .xbtn { flex: none; align-self: center; display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--box);
+          color: var(--fg); border-radius: 22px; padding: 7px 14px; font-family: inherit; font-weight: 600; font-size: clamp(12px, 2.4cqw, 14px); cursor: pointer;
+          backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .xbtn svg { width: 16px; height: 16px; }
+  .xbtn:disabled { opacity: .65; cursor: default; }
+
+  .xvs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(6px, 1.2cqh, 10px); }
+  .xv { display: flex; align-items: center; gap: 10px; min-width: 0; background: var(--box); border: 1px solid var(--line); border-radius: 12px;
+        padding: clamp(6px, 1.4cqh, 11px) 12px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .xv svg { width: 20px; height: 20px; flex: none; fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .xv div { display: flex; flex-direction: column; min-width: 0; }
+  .xv span { color: var(--sub); font-size: clamp(10px, 1.9cqw, 12px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .xv b { font-size: clamp(13px, 2.6cqw, 17px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .xv i { font-style: normal; font-weight: 400; color: var(--sub); font-size: .85em; }
+  .xv.wide { grid-column: 1 / -1; }
+  .xv.wide b { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+  @container (min-width: 620px) { .xvs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @container (min-width: 980px) { .xvs { grid-template-columns: repeat(4, minmax(0, 1fr)); } .xv.wide { grid-column: span 2; } }
+  @container (max-height: 420px) { .xv.opt { display: none; } }
+  @container (max-height: 300px) { .xv.wide { display: none; } }
+  @container (max-height: 220px) { .xvs { display: none; } }
+  @container (max-width: 300px) { .xbtn span { display: none; } }
+
+  #xe { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--sub); }
+</style>
+</head>
+<body>
+<div id="xw" class="vd">
+  <div id="xm"></div><div id="xo"></div><div id="xatt">Esri, HERE, Garmin, © OpenStreetMap</div>
+  <div id="xc"></div>
+</div>
+<script>
+(function () {
+  var T = %TEXTS%, THEME = %THEME%;
+  var P = new URLSearchParams(location.search), W = document.getElementById('xw'), C = document.getElementById('xc');
+  var pending = 0, data = null, mapKey = '', dark = true;
+  var ICONS = {
+    home: '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
+    pin: '<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    signal: '<path d="M2 9a15 15 0 0 1 20 0"/><path d="M5.5 12.5a10 10 0 0 1 13 0"/><path d="M9 16a5 5 0 0 1 6 0"/><circle cx="12" cy="19" r="1"/>',
+    target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
+    shield: '<path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+    addr: '<path d="M4 6h16M4 12h16M4 18h10"/>',
+    locate: '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>'
+  };
+  // Optional: Kachel-Visu passes the hex colors, ARGB with alpha ff or RGB
+  function color(n) {
+    var v = getComputedStyle(document.documentElement).getPropertyValue(n).replace(/[^0-9a-f]/gi, '');
+    if (v.length < 6) { return null; }
+    return v.length === 8 && /^ff/i.test(v) ? v.slice(2) : v.slice(0, 6);
+  }
+  function lum(h) { var c = parseInt(h, 16); return 0.299 * (c >> 16) + 0.587 * (c >> 8 & 255) + 0.114 * (c & 255); }
+  function px(n, d) { var v = parseFloat(P.get(n)); return isNaN(v) ? d : v; }
+  function esc(t) { return String(t).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }
+  function icon(n) { return '<svg viewBox="0 0 24 24">' + ICONS[n] + '</svg>'; }
+  function age(t) {
+    var s = Math.floor(Date.now() / 1000) - t;
+    if (t <= 0) { return ''; }
+    if (s < 60) { return T.now; }
+    var a = s < 3600 ? T.min.replace('%d', Math.floor(s / 60)) : s < 86400 ? T.h.replace('%d', Math.floor(s / 3600)) : T.d.replace('%d', Math.floor(s / 86400));
+    return T.ago.replace('%s', a);
+  }
+
+  var cb = color('--card-color'), cf = color('--content-color');
+  dark = THEME === 1 || (THEME === 0 && (cb ? lum(cb) < (cf ? lum(cf) : 128) : !matchMedia('(prefers-color-scheme: light)').matches));
+  W.className = dark ? 'vd' : 'vl';
+  if (THEME === 0 && cb) { W.style.setProperty('--bg', '#' + cb); }
+  W.style.setProperty('--mt', px('margintop', 12) + 'px');
+  W.style.setProperty('--ms', Math.max(10, px('marginside', 12)) + 'px');
+  W.style.setProperty('--mb', Math.max(8, px('marginbottom', 12)) + 'px');
+
+  function ring(b, charging, c) {
+    if (b === null || b === undefined) { return ''; }
+    var r = 42, u = 2 * Math.PI * r, bc = b <= 20 ? '#e74c3c' : (b <= 40 ? '#f5a623' : '#2ecc71');
+    return '<svg class="xring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="' + r + '" fill="none" stroke="var(--track)" stroke-width="9"/>'
+      + '<circle cx="50" cy="50" r="' + r + '" fill="none" stroke="' + bc + '" stroke-width="9" stroke-linecap="round" stroke-dasharray="' + u.toFixed(1)
+      + '" stroke-dashoffset="' + (u * (1 - b / 100)).toFixed(1) + '" transform="rotate(-90 50 50)"/>'
+      + '<text x="50" y="49" text-anchor="middle" dominant-baseline="central" fill="var(--fg)" font-size="23" font-weight="700">' + b + '%</text>'
+      + '<text x="50" y="70" text-anchor="middle" fill="var(--sub)" font-size="10">' + (charging ? '⚡ ' + esc(T.charging) : esc(T.battery)) + '</text></svg>';
+  }
+
+  function render() {
+    var d = data;
+    if (!d) { return; }
+    if (d.empty) {
+      C.innerHTML = '';
+      document.getElementById('xm').innerHTML = '';
+      W.insertAdjacentHTML('beforeend', '<div id="xe">' + esc(d.empty) + '</div>');
+      return;
+    }
+    var e = document.getElementById('xe');
+    if (e) { e.remove(); }
+    W.style.setProperty('--accent', d.color);
+    var busy = pending > Date.now();
+    var h = '<div class="xhero">' + ring(d.battery, d.charging) + '<div class="xst"><div class="xs" style="color:' + d.color + '">' + esc(d.status) + '</div>'
+      + (d.sub ? '<div class="xu">' + esc(d.sub) + '</div>' : '') + '</div>'
+      + '<button class="xbtn" id="xbtn"' + (busy ? ' disabled' : '') + '>' + icon('locate') + '<span>' + esc(busy ? T.pending : T.locate) + '</span></button></div>';
+    h += '<div class="xvs">';
+    d.values.forEach(function (v, i) {
+      var extra = v[3] === 'age' ? ' <i class="xage">' + esc(age(d.time)) + '</i>' : '';
+      h += '<div class="xv' + (i >= 4 ? ' opt' : '') + '">' + icon(v[0]) + '<div><span>' + esc(v[1]) + '</span><b>' + esc(v[2]) + extra + '</b></div></div>';
+    });
+    if (d.address) {
+      h += '<div class="xv wide">' + icon('addr') + '<div><span>' + esc(T.address) + '</span><b>' + esc(d.address) + '</b></div></div>';
+    }
+    C.innerHTML = h + '</div>';
+    document.getElementById('xbtn').onclick = function () {
+      pending = Date.now() + 120000;
+      this.disabled = true;
+      this.querySelector('span').textContent = T.pending;
+      requestAction('Locate', true);
+    };
+    map();
+  }
+
+  // Map tiles (Esri Canvas, no key) covering the whole tile; location in the middle of the free area above the content
+  function map() {
+    var d = data, m = document.getElementById('xm');
+    if (!d || d.empty) { return; }
+    var w = W.clientWidth, h = W.clientHeight, top = h - C.offsetHeight - px('marginbottom', 12);
+    if (!w || !h) { return; }
+    var mt = px('margintop', 12) + 20, cx = w / 2, cy = Math.max(Math.min((mt + top) / 2, h * 0.45), Math.min(mt + 10, h * 0.3));
+    var o = document.getElementById('xo'), fade = Math.max(40, Math.min(120, top - cy));
+    o.style.top = (top - fade) + 'px';
+    o.style.background = 'linear-gradient(180deg, transparent 0, var(--bg) ' + fade + 'px)';
+    document.getElementById('xatt').style.top = (top - fade - 14) + 'px';
+    var z = w > 1100 ? 16 : 15, n = Math.pow(2, z), x = (d.lng + 180) / 360 * n, r = d.lat * Math.PI / 180;
+    var y = (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * n;
+    var key = [d.lat, d.lng, w, h, Math.round(cy), dark].join();
+    if (key !== mapKey) {
+      mapKey = key;
+      var layer = dark ? 'World_Dark_Gray_Base' : 'World_Light_Gray_Base', s = '';
+      for (var j = Math.floor(y - cy / 256); j <= Math.floor(y + (h - cy) / 256); j++) {
+        for (var i = Math.floor(x - cx / 256); i <= Math.floor(x + (w - cx) / 256); i++) {
+          s += '<img alt="" src="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/' + layer + '/MapServer/tile/' + z + '/' + j + '/' + ((i % n) + n) % n
+            + '" style="left:' + Math.round(cx + (i - x) * 256) + 'px;top:' + Math.round(cy + (j - y) * 256) + 'px">';
+        }
+      }
+      // Accuracy circle: meters per pixel at this latitude and zoom
+      var acc = Math.min(2 * d.accuracy / (156543.03392 * Math.cos(r) / n), Math.max(w, h));
+      s += '<div id="xacc" style="left:' + cx + 'px;top:' + cy + 'px;width:' + acc + 'px;height:' + acc + 'px;background:' + d.color + '22;border:1px solid ' + d.color + '66"></div>'
+        + '<div id="xpin" style="left:' + cx + 'px;top:' + cy + 'px;background:' + d.color + ';color:' + d.color + '"></div>';
+      m.innerHTML = s;
+    }
+  }
+
+  window.handleMessage = function (raw) {
+    var d = JSON.parse(raw);
+    if (d.fresh) { pending = 0; }
+    data = d;
+    render();
+  };
+  window.addEventListener('resize', map);
+  setInterval(function () {
+    var a = document.querySelector('.xage');
+    if (a && data) { a.textContent = age(data.time); }
+    if (pending && pending <= Date.now()) { pending = 0; render(); }
+  }, 30000);
+  handleMessage(%INITIAL%);
+})();
+</script>
+</body>
+</html>
