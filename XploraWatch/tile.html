@@ -97,7 +97,7 @@
 (function () {
   var T = %TEXTS%, THEME = %THEME%;
   var P = new URLSearchParams(location.search), W = document.getElementById('xw'), C = document.getElementById('xc'), H = document.getElementById('xh');
-  var pending = 0, wideNow = false, hmode = '', data = null, dark = true, sat = false, full = false, map = null, layers = {}, live = null, histSrc = '';
+  var pending = 0, trackRenderer = null, wideNow = false, hmode = '', data = null, dark = true, sat = false, full = false, map = null, layers = {}, live = null, histSrc = '';
   var ICONS = {
     home: '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
     pin: '<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
@@ -269,18 +269,23 @@
       layers.lbl = L.tileLayer(esri + 'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
       setLayer(sat);
       live = L.layerGroup().addTo(map);
+      // Own pane above the vignette (z-index 440) for track and accuracy circle, otherwise they are hardly visible
+      map.createPane('xtrack').style.zIndex = 460;
+      trackRenderer = L.svg({ pane: 'xtrack' });
       window.addEventListener('resize', function () { map.invalidateSize(); if (wide() !== wideNow) { render(); } else { fade(); placeHistory(); } });
       setTimeout(function () { map.invalidateSize(); center(); }, 50);
     }
     live.clearLayers();
     var midnight = new Date().setHours(0, 0, 0, 0) / 1000, track = d.points.filter(function (p) { return p[0] >= midnight; }).map(function (p) { return [p[1], p[2]]; });
     if (track.length > 1) {
-      L.polyline(track, { color: d.color, weight: 4, opacity: .55, dashArray: '1 7', lineCap: 'round' }).addTo(live);
-      track.forEach(function (q) { L.circleMarker(q, { radius: 2.5, stroke: false, fillColor: d.color, fillOpacity: .7, interactive: false }).addTo(live); });
+      var o = { pane: 'xtrack', renderer: trackRenderer, interactive: false, lineCap: 'round', lineJoin: 'round' };
+      L.polyline(track, L.extend({ color: '#000', weight: 8, opacity: .45 }, o)).addTo(live);
+      L.polyline(track, L.extend({ color: d.color, weight: 4, opacity: .95 }, o)).addTo(live);
+      track.forEach(function (q) { L.circleMarker(q, L.extend({ radius: 3.5, color: '#fff', weight: 1.5, fillColor: d.color, fillOpacity: 1 }, o)).addTo(live); });
     }
     if (d.home) { L.marker(d.home, { icon: L.divIcon({ className: 'xico', html: '🏠', iconSize: [24, 24] }), interactive: false }).addTo(live); }
     if (d.place2) { L.marker(d.place2.pos, { icon: L.divIcon({ className: 'xico', html: '📍', iconSize: [24, 24], iconAnchor: [12, 22] }) }).bindTooltip(esc(d.place2.name)).addTo(live); }
-    if (d.accuracy > 0) { L.circle([d.lat, d.lng], { radius: d.accuracy, color: d.color, weight: 1, opacity: .6, fillOpacity: .12, interactive: false }).addTo(live); }
+    if (d.accuracy > 0) { L.circle([d.lat, d.lng], { radius: d.accuracy, color: d.color, weight: 1, opacity: .7, fillOpacity: .15, interactive: false, pane: 'xtrack', renderer: trackRenderer }).addTo(live); }
     L.marker([d.lat, d.lng], { icon: L.divIcon({ className: '', html: '<div class="xpin" style="background:' + d.color + ';--c:' + d.color + '"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }) })
       .bindTooltip(esc(d.name) + ' · ' + hm(d.time)).addTo(live);
     fade();
