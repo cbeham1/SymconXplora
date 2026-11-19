@@ -182,6 +182,17 @@ class XploraWatch extends IPSModule
             'd'        => $this->Translate('%d d'),
             'ago'      => $this->Translate('%s ago'),
             'address'  => $this->Translate('Address'),
+            'dec'      => $this->Translate('.'),
+            'map'      => $this->Translate('Map'),
+            'sat'      => $this->Translate('Satellite'),
+            'center'   => $this->Translate('Center'),
+            'histToday'=> $this->Translate('History today'),
+            'live'     => $this->Translate('Live'),
+            'awaySince'=> $this->Translate('away since %s'),
+            'homeSince'=> $this->Translate('at home since %s'),
+            'route'    => $this->Translate('Route today'),
+            'away'     => $this->Translate('Away from home today'),
+            'locs'     => $this->Translate('%d locations'),
         ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG);
         $initial = json_encode($this->InstanceTileMessage(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
         return strtr((string) file_get_contents(__DIR__ . '/tile.html'), [
@@ -895,7 +906,7 @@ class XploraWatch extends IPSModule
         if ($type !== '') {
             $values[] = ['signal', $this->Translate('Location type'), $type];
         }
-        $values[] = ['target', $this->Translate('Accuracy'), '± ' . (int) $d['accuracy'] . ' m'];
+        $values[] = ['target', $this->Translate('Accuracy'), $d['accuracy'] > 0 ? '± ' . (int) $d['accuracy'] . ' m' : '–'];
         $values[] = ['shield', $this->Translate('Safe zone'), $d['zone'] !== '' ? $d['zone'] : $this->Translate('outside')];
 
         return [
@@ -912,7 +923,27 @@ class XploraWatch extends IPSModule
             'lat'      => (float) $d['lat'],
             'lng'      => (float) $d['lng'],
             'accuracy' => (int) $d['accuracy'],
+            'atHome'   => $d['atHome'],
+            'home'     => $this->GetHome(),
+            'radius'   => $this->ReadPropertyInteger('HomeRadius'),
+            'place2'   => $this->GetPlace2() === null ? null : ['pos' => $this->GetPlace2(), 'name' => $this->GetPlace2Name()],
+            // Locations of the last 36 hours: track of today, "away since" and statistics of today (computed in the tile)
+            'points'   => $this->ReadPropertyBoolean('ShowHistory') ? $this->RecentPoints(36 * 3600) : [],
+            'history'  => $this->ReadPropertyBoolean('ShowHistory') ? $this->HookPath() . '?t=' . $this->ReadAttributeString('HookToken') : null,
         ];
+    }
+
+    /** Recorded locations of the last $seconds as [time, latitude, longitude, accuracy]. */
+    private function RecentPoints(int $seconds): array
+    {
+        $limit = time() - $seconds;
+        $points = [];
+        foreach (json_decode($this->ReadAttributeString('History'), true) ?: [] as $p) {
+            if ($p[0] >= $limit) {
+                $points[] = [$p[0], $p[1], $p[2], $p[3]];
+            }
+        }
+        return $points;
     }
 
     /** Automatic design: follows the card/text colors that the tile visualization passes to HTML content, otherwise prefers-color-scheme. */

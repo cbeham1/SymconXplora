@@ -95,7 +95,14 @@
             "No location yet": "Noch keine Ortung",
             "outside": "außerhalb",
             "charging": "lädt",
-            "%s ago": "vor %s"
+            "%s ago": "vor %s",
+            "History today": "Verlauf heute",
+            "Live": "Live",
+            "away since %s": "unterwegs seit %s",
+            "at home since %s": "zu Hause seit %s",
+            "Route today": "Weg heute",
+            "Away from home today": "Außer Haus heute",
+            "%d locations": "%d Ortungen"
         }
     }
 }
