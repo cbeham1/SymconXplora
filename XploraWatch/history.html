@@ -34,6 +34,10 @@ button.on{background:#e08a00;border-color:#e08a00;color:#fff}
 .pip #map{-webkit-mask-image:linear-gradient(to right,transparent,#000 14%,#000 94%,transparent),linear-gradient(to bottom,transparent,#000 12%,#000 88%,transparent);
   -webkit-mask-composite:source-in;mask-image:linear-gradient(to right,transparent,#000 14%,#000 94%,transparent),linear-gradient(to bottom,transparent,#000 12%,#000 88%,transparent);mask-composite:intersect}
 .pip .leaflet-control-zoom,.pip .leaflet-control-attribution{display:none}
+.embed .leaflet-container{background:transparent;outline:0}
+/* Dark design: street map darkened so that it fits the dark tile */
+:root.dark .osm{filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.85) saturate(.7)}
+@media (prefers-color-scheme: dark){:root.auto .osm{filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.85) saturate(.7)}}
 #leer{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);z-index:500;background:rgba(0,0,0,.7);color:#fff;padding:10px 16px;border-radius:8px;display:none}
 </style></head>
 <body><div id="app">
@@ -83,7 +87,7 @@ function dauer(s){s=Math.round(s/60);const h=Math.floor(s/60),m=s%60;return h?h+
 let tag = heute(), pts = [], cur = 0, timer = null;
 
 const map = L.map('map',{zoomControl:true});
-const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
+const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap',className:'osm'});
 const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'});
 const satLbl = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19});
 let layer = store.get('xl') || 'karte';

@@ -251,7 +251,7 @@
     // Big tiles: horizontally in the middle of the free map area left of the history panel
     var w = W.clientWidth, x = w / 2, slot = document.getElementById('xhp');
     if (slot && !full) { x = Math.min(x, (slot.getBoundingClientRect().left - W.getBoundingClientRect().left) / 2); }
-    map.setView([data.lat, data.lng], map.getZoom() || 16, { animate: false });
+    map.setView([data.lat, data.lng], map.getZoom() || 17, { animate: false });
     map.panBy([w / 2 - x, h / 2 - y], { animate: false });
   }
 
@@ -260,7 +260,7 @@
     if (typeof L === 'undefined') { return; }
     var esri = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
     if (!map) {
-      map = L.map('xmap', { zoomControl: true, scrollWheelZoom: false, attributionControl: true, zoomSnap: 0.5 }).setView([d.lat, d.lng], 16);
+      map = L.map('xmap', { zoomControl: true, scrollWheelZoom: false, attributionControl: true, zoomSnap: 0.5 }).setView([d.lat, d.lng], 17);
       var tone = dark ? 'Dark' : 'Light';
       layers.base = L.tileLayer(esri + 'Canvas/World_' + tone + '_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 16, maxZoom: 19, attribution: 'Esri, HERE, Garmin, © OpenStreetMap' });
       layers.ref = L.tileLayer(esri + 'Canvas/World_' + tone + '_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 16, maxZoom: 19 });
