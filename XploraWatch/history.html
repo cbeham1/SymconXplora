@@ -30,7 +30,10 @@ button.on{background:#e08a00;border-color:#e08a00;color:#fff}
 .embed,.embed body{overflow:hidden;background:transparent}.embed #app>div{min-height:0}.embed #map{min-height:0}
 /* Panel next to the infos: date and replay, no statistics; button to open the full view */
 .pip #close,.pip #lgrp,.pip #tempo,.pip #stats{display:none!important}.pip #expand{display:inline-block}
-.pip .bar{padding:6px 8px;gap:6px}.pip button,.pip input[type=date]{padding:4px 8px;font-size:13px}
+.pip .bar{padding:6px 8px;gap:6px;background:transparent;border:0}.pip button,.pip input[type=date]{padding:4px 8px;font-size:13px}
+.pip #map{-webkit-mask-image:linear-gradient(to right,transparent,#000 14%,#000 94%,transparent),linear-gradient(to bottom,transparent,#000 12%,#000 88%,transparent);
+  -webkit-mask-composite:source-in;mask-image:linear-gradient(to right,transparent,#000 14%,#000 94%,transparent),linear-gradient(to bottom,transparent,#000 12%,#000 88%,transparent);mask-composite:intersect}
+.pip .leaflet-control-zoom,.pip .leaflet-control-attribution{display:none}
 #leer{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);z-index:500;background:rgba(0,0,0,.7);color:#fff;padding:10px 16px;border-radius:8px;display:none}
 </style></head>
 <body><div id="app">
