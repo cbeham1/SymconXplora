@@ -38,10 +38,10 @@
 
   /* Content inside the margins of the tile visualization */
   /* Sizes in em: the base font size grows with the tile, so big tiles get a big info area */
-  #xc { position: absolute; left: var(--ms); right: var(--ms); bottom: var(--mb); z-index: 1000; display: flex; gap: .8em;
+  #xc { position: absolute; left: var(--ms); right: var(--ms); bottom: var(--mb); z-index: 1000; display: flex; align-items: flex-end; gap: .8em;
         font-size: clamp(12px, min(1.25cqw, 2.3cqh), 22px); }
   .xcol { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: .6em; container: info / inline-size; }
-  .xhp { flex: 0 0 38%; min-height: 19em; }
+  .xhp { flex: 0 0 46%; height: max(19em, 60cqh); }
   .xhero { display: flex; align-items: center; gap: 1em; }
   .xring { width: 6.4em; height: auto; flex: none; }
   .xst { min-width: 0; flex: 1; }
@@ -235,14 +235,21 @@
   }
 
   // Top of the content = lower end of the free map area
-  function contentTop() { return W.clientHeight - C.offsetHeight - px('marginbottom', 12); }
+  // (the history panel may be higher than the infos and reaches into the map, so the info column counts)
+  function contentTop() {
+    var col = C.querySelector('.xcol');
+    return col ? col.getBoundingClientRect().top - W.getBoundingClientRect().top : W.clientHeight - C.offsetHeight - px('marginbottom', 12);
+  }
 
   function center() {
     if (!map || !data || data.empty) { return; }
     var h = W.clientHeight, top = contentTop(), mt = px('margintop', 12) + 40;
     var y = Math.max(Math.min((mt + top) / 2, h * 0.5), Math.min(mt, h * 0.3));
+    // Big tiles: horizontally in the middle of the free map area left of the history panel
+    var w = W.clientWidth, x = w / 2, slot = document.getElementById('xhp');
+    if (slot && !full) { x = Math.min(x, (slot.getBoundingClientRect().left - W.getBoundingClientRect().left) / 2); }
     map.setView([data.lat, data.lng], map.getZoom() || 16, { animate: false });
-    map.panBy([0, h / 2 - y], { animate: false });
+    map.panBy([w / 2 - x, h / 2 - y], { animate: false });
   }
 
   function drawMap() {
