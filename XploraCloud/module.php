@@ -18,6 +18,8 @@ class XploraCloud extends IPSModule
     private const API_KEY = '98fa41bc50c84e2f833e3997aedfe1cf';
     private const API_SECRET = '6d129c656ef64bf0becd3a370bbe068d';
     private const SESSION_MAX_AGE = 30 * 86400;
+    /** The watch list only comes with the login; the configurator logs in again when it is older than this. */
+    private const WARDS_MAX_AGE = 300;
     private const PAUSE_AFTER_THROTTLING = 3600;
 
     private const STATUS_LOGIN_FAILED = 201;
@@ -88,7 +90,7 @@ class XploraCloud extends IPSModule
             $wardID = (string) ($request['WardID'] ?? '');
             switch ((string) ($request['Function'] ?? '')) {
                 case 'GetWards':
-                    $result = $this->GetWardList();
+                    $result = $this->GetWardList(true);
                     break;
                 case 'GetLastLocation':
                     $this->CheckWardID($wardID);
@@ -137,13 +139,26 @@ class XploraCloud extends IPSModule
         }
     }
 
-    private function GetWardList(): array
+    /**
+     * Watch list of the account. It is only delivered with the login, so with $refresh
+     * (configurator) a new login is made when the stored list is older than WARDS_MAX_AGE.
+     * Watches added in the app later then appear without waiting for the session to expire.
+     */
+    private function GetWardList(bool $refresh = false): array
     {
         $wards = json_decode($this->ReadAttributeString('Wards'), true);
-        if (!is_array($wards) || $wards === [] || $this->ReadAttributeString('Auth') === '') {
+        $hasList = is_array($wards) && $wards !== [] && $this->ReadAttributeString('Auth') !== '';
+        if (!$hasList) {
             $this->Login();
-            $wards = json_decode($this->ReadAttributeString('Wards'), true);
+        } elseif ($refresh && (time() - $this->ReadAttributeInteger('AuthTime')) > self::WARDS_MAX_AGE) {
+            try {
+                $this->Login();
+            } catch (RuntimeException $e) {
+                // Keep the stored list if the cloud is not reachable or throttled
+                $this->SendDebug('GetWardList', 'Refresh failed, using stored list: ' . $e->getMessage(), 0);
+            }
         }
+        $wards = json_decode($this->ReadAttributeString('Wards'), true);
         return is_array($wards) ? $wards : [];
     }
 
