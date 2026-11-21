@@ -22,7 +22,7 @@ Holds the login to an Xplora parent account and forwards the requests of the Xpl
 
 ### 2. Requirements
 
-- IP-Symcon 7.0 or newe
+- IP-Symcon 7.0 or newer
 - Xplora parent account with at least one watch
 - Internet access to `api.prod.myxplora.com`
 
@@ -47,7 +47,8 @@ Holds the login to an Xplora parent account and forwards the requests of the Xpl
 The password is sent to Xplora as MD5 hash only, the same way the parent app does it.
 
 The marker color of each watch is set in the watch instance ("Marker color in the overview tile", transparent = automatic).
-The watches send their data to the overview after each update – there are no additional requests to Xplora.
+When switched on, the watches fetch their data at once (one request per watch); afterwards they send it to the overview
+after each update – there are no additional requests to Xplora. See the [main documentation](../README.md) for a picture.
 
 ### 5. Status variables and profiles
 

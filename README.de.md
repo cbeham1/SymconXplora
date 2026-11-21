@@ -2,7 +2,7 @@
 
 Einbindung von Xplora-Kinder-Smartwatches über die Xplora-Cloud (derselbe Dienst, den die Xplora-Eltern-App nutzt):
 Standort, Adresse, Sicherheitszone, Akku und Ladezustand, Abstand und „Zu Hause“ bzw. an einem zweiten Ort,
-Instanz-Kachel für die Kachel-Visualisierung (Karte, Infos, Tagesroute), Statuskachel, Karte und Positionsverlauf.
+Instanz-Kachel für die Kachel-Visualisierung (Karte, Infos, Tagesroute), Übersichtskachel aller Uhren, Statuskachel, Karte und Positionsverlauf.
 
 [English version](README.md)
 
@@ -17,7 +17,7 @@ Open-Source-Projekte [pyxplora_api](https://github.com/Ludy87/pyxplora_api) und
 
 | Modul | Aufgabe |
 | --- | --- |
-| [Xplora Cloud](XploraCloud/README.de.md) | Anmeldung am Xplora-Elternkonto, Verbindung zur Cloud (eine Instanz je Konto) |
+| [Xplora Cloud](XploraCloud/README.de.md) | Anmeldung am Xplora-Elternkonto, Verbindung zur Cloud (eine Instanz je Konto), optional Übersichtskachel aller Uhren |
 | [Xplora Configurator](XploraConfigurator/README.de.md) | listet die Uhren des Kontos und legt die Uhren-Instanzen an |
 | [Xplora Watch](XploraWatch/README.de.md) | eine Uhr: Standort, Adresse, Sicherheitszone, Akku, Ladezustand, Instanz-Kachel, Statuskachel, Karte, Verlauf |
 
@@ -107,6 +107,22 @@ Statuskachel (Ort, Karte und Name für die Doku verpixelt):
 Beispiel einer Seite mit Statuskachel, einzelnen Variablen und Kartenvariable (verpixelt):
 
 ![Seite in der Kachel-Visualisierung](docs/visualisierung.png)
+
+### 7. Übersichtskachel aller Uhren
+
+Alle Uhren eines Kontos auf einer Karte: in der Instanz **„Xplora Cloud“** unter **„Übersichtskachel“** die Option
+**„Instanz als Übersichtskachel aller Uhren“** einschalten (Design: Automatisch/Dunkel/Hell) und die Cloud-Instanz in die
+Kachel-Visualisierung ziehen. Beim Einschalten holen die Uhren ihre Daten sofort, danach kommen sie mit jeder Aktualisierung
+der Uhren – ohne zusätzliche Anfragen an Xplora.
+
+* Karte (Karte/Satellit, „Alle zeigen“) mit je einem farbigen Punkt pro Uhr (Anfangsbuchstabe, Genauigkeitskreis) und dem Zuhause
+* Legende unten: Name, Ort in der Statusfarbe (Zu Hause grün, zweiter Ort lila, unterwegs orange), Abstand, Ortungszeit und Alter, Akku-Ring
+* Klick auf einen Punkt oder Legenden-Eintrag zoomt auf die Uhr, noch ein Klick zeigt wieder alle
+* Punktfarbe je Uhr in der Uhren-Instanz: **„Punktfarbe in der Übersichtskachel“** (transparent = automatisch)
+
+Übersichtskachel (Beispieldaten):
+
+![Übersichtskachel](docs/uebersichtskachel.png)
 
 ## Fehlersuche
 

@@ -211,7 +211,13 @@ class XploraWatch extends IPSModule
 
     public function ReceiveData($JSONString): string
     {
-        // The cloud instance does not push data
+        // The cloud instance only asks for the data of the overview tile (after it was switched on):
+        // update shortly, the update then sends the data (not directly, the cloud instance is still applying its changes)
+        $data = json_decode($JSONString, true);
+        $request = json_decode((string) ($data['Buffer'] ?? ''), true);
+        if (is_array($request) && ($request['Function'] ?? '') === 'OverviewRequest' && $this->ReadPropertyString('WardID') !== '') {
+            $this->SetTimerInterval('Update', self::FIRST_UPDATE_DELAY * 1000);
+        }
         return '';
     }
 

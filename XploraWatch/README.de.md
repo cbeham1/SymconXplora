@@ -71,6 +71,7 @@ Tipp: Die Instanz „Xplora `<Name>`“ nennen, z. B. „Xplora Lena“ – Kach
 | Mini-Kachel anlegen | kleine HTML-Box „Mini-Kachel“ für eine kleine Kachel: Status (farbig), Akku in %, Abstand von zu Hause, Alter der Ortung („15 Min.“, aktualisiert sich im Browser; Abstand ohne Nachkommastellen, z. B. „12 km“) und Akkubalken (Standard aus) |
 | Karte als Hintergrund | Karte des Standorts hinter der Statuskachel (Standard an) |
 | Design der Statuskachel | Automatisch (Design der Kachel-Visualisierung; Verlauf: Hell/Dunkel des Geräts), Dunkel, Hell – gilt auch für den Verlauf |
+| Punktfarbe in der Übersichtskachel | Farbe des Punkts dieser Uhr in der Übersichtskachel der Cloud-Instanz (transparent = automatisch) |
 | Kartenvariable anlegen | HTML-Box mit OpenStreetMap-Karte der letzten Ortung |
 | Verlauf aufzeichnen | speichert die Ortungen und legt die HTML-Box „Verlauf“ an (Standard aus) |
 | Verlauf aufbewahren | Tage (1–60, Standard 15) |

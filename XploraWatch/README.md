@@ -67,6 +67,7 @@ Best via the Xplora Configurator. Manually: "Add instance" → "Xplora Watch" an
 | Create mini tile              | Small HTML box "Mini tile" for a small tile: status (colored), battery, distance from home, age of the location (refreshed in the browser) and battery bar (default off) |
 | Map as background             | Shows a map of the location behind the status tile (default on)                |
 | Design of the status tile     | Automatic (design of the tile visualization, history: device), dark or light               |
+| Marker color in the overview tile | Color of this watch in the overview tile of the cloud instance (transparent = automatic) |
 | Create map variable           | HTML box with a map of the last location (map / satellite, "Center")            |
 | Record location history       | Stores the locations and creates the HTML box "Location history" (default off) |
 | Keep history for              | Days the locations are kept (1–60, default 15)                                 |

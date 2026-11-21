@@ -24,8 +24,8 @@ Hält die Anmeldung an einem Xplora-Elternkonto und leitet die Anfragen der Inst
 
 ### 2. Voraussetzungen
 
-- IP-Symcon 7.0 oder neue
-- Xplora-Elternkonto mit mindestens einer Uh
+- IP-Symcon 7.0 oder neuer
+- Xplora-Elternkonto mit mindestens einer Uhr
 - Internetzugang zu `api.prod.myxplora.com`
 
 ### 3. Installation
@@ -50,7 +50,8 @@ Hält die Anmeldung an einem Xplora-Elternkonto und leitet die Anfragen der Inst
 Das Passwort wird – wie in der Eltern-App – nur als MD5-Prüfsumme an Xplora gesendet.
 
 Die Punktfarbe je Uhr wird in der Uhren-Instanz eingestellt („Punktfarbe in der Übersichtskachel“, transparent = automatisch).
-Die Uhren schicken ihre Daten nach jeder Aktualisierung an die Übersicht – es entstehen keine zusätzlichen Anfragen an Xplora.
+Beim Einschalten holen die Uhren ihre Daten sofort (eine Abfrage je Uhr), danach schicken sie sie nach jeder Aktualisierung
+an die Übersicht – es entstehen keine zusätzlichen Anfragen an Xplora. Beispielbild siehe [Hauptanleitung](../README.de.md).
 
 ### 5. Statusvariablen und Profile
 

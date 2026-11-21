@@ -2,7 +2,7 @@
 
 Integration of Xplora kids smartwatches via the Xplora cloud (the same service the Xplora parent app uses):
 location, address, safe zone, battery and charging state, distance and "at home" or at a second place,
-instance tile for the tile visualization (map, information, day route), status tile, map and location history.
+instance tile for the tile visualization (map, information, day route), overview tile of all watches, status tile, map and location history.
 
 [Deutsche Anleitung](README.de.md)
 
@@ -17,7 +17,7 @@ Xplora may change the API at any time.
 
 | Module | Task |
 | --- | --- |
-| [Xplora Cloud](XploraCloud/README.md) | login to the Xplora parent account, connection to the cloud (one instance per account) |
+| [Xplora Cloud](XploraCloud/README.md) | login to the Xplora parent account, connection to the cloud (one instance per account), optional overview tile of all watches |
 | [Xplora Configurator](XploraConfigurator/README.md) | lists the watches of the account and creates the watch instances |
 | [Xplora Watch](XploraWatch/README.md) | one watch: location, address, safe zone, battery, charging, instance tile, status tile, map, history |
 
@@ -107,6 +107,22 @@ Status tile (place, map and name pixelated for the documentation):
 Example page with status tile, single variables and map variable (pixelated):
 
 ![Page in the tile visualization](docs/visualisierung.png)
+
+### 7. Overview tile of all watches
+
+All watches of an account on one map: in the instance **"Xplora Cloud"** under **"Overview tile"** switch on
+**"Instance as overview tile of all watches"** (design: automatic/dark/light) and drag the cloud instance into the tile
+visualization. When switched on, the watches fetch their data at once; afterwards it arrives with every update of the
+watches – without additional requests to Xplora.
+
+* Map (map/satellite, "Show all") with one colored marker per watch (initial, accuracy circle) and the home
+* Legend at the bottom: name, place in the status color (at home green, second place purple, on the way orange), distance, location time and age, battery ring
+* A click on a marker or legend entry zooms to the watch, another click shows all again
+* Marker color per watch in the watch instance: **"Marker color in the overview tile"** (transparent = automatic)
+
+Overview tile (example data):
+
+![Overview tile](docs/uebersichtskachel.png)
 
 ## Troubleshooting
 

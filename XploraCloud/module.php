@@ -22,6 +22,7 @@ class XploraCloud extends IPSModule
     private const WARDS_MAX_AGE = 300;
     private const PAUSE_AFTER_THROTTLING = 3600;
     private const WATCH_MODULE = '{DF4743D6-EF1E-4698-8F22-BE7930F405FE}';
+    private const DATA_TO_CHILDREN = '{B88FCB69-95A7-44D0-A133-BA0815445A44}';
     /** Automatic marker colors of the overview tile (distinct from the status colors green/orange/purple). */
     private const OVERVIEW_COLORS = ['#3d9bff', '#ff4f9a', '#f2c81d', '#19c3c9', '#a07cff', '#ff7a2f', '#7ed957'];
 
@@ -60,6 +61,7 @@ class XploraCloud extends IPSModule
         $this->RegisterPropertyBoolean('OverviewTile', false);
         $this->RegisterPropertyInteger('OverviewTheme', 0);
         $this->RegisterAttributeString('Overview', '{}');
+        $this->RegisterAttributeBoolean('OverviewOn', false);
     }
 
     public function ApplyChanges(): void
@@ -82,6 +84,12 @@ class XploraCloud extends IPSModule
             $this->SetVisualizationType($this->ReadPropertyBoolean('OverviewTile') ? 1 : 0);
         }
         $this->UpdateOverview();
+        // Just switched on: ask the watches for their data now instead of waiting for their next regular update
+        $overviewOn = $this->OverviewActive();
+        if ($overviewOn && !$this->ReadAttributeBoolean('OverviewOn') && IPS_GetKernelRunlevel() === KR_READY && $this->HasCredentials()) {
+            $this->SendDataToChildren(json_encode(['DataID' => self::DATA_TO_CHILDREN, 'Buffer' => json_encode(['Function' => 'OverviewRequest'])]));
+        }
+        $this->WriteAttributeBoolean('OverviewOn', $overviewOn);
 
         $this->SetStatus($this->HasCredentials() ? IS_ACTIVE : IS_INACTIVE);
     }
