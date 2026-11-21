@@ -18,6 +18,7 @@
   #xmap .leaflet-control-attribution { background: transparent; color: var(--sub); font-size: 9px; }
   #xmap .leaflet-control-attribution a { color: var(--sub); }
   #xmap .leaflet-bar a { background: var(--box); color: var(--fg); border-color: var(--line); backdrop-filter: blur(8px); }
+  .xdark { filter: invert(1) hue-rotate(180deg) brightness(.95) contrast(.9) saturate(.6); }
   #xvg { position: absolute; inset: 0; z-index: 440; pointer-events: none; box-shadow: inset 0 0 120px 50px var(--bg); }
   #xo { position: absolute; left: 0; right: 0; bottom: 0; z-index: 450; pointer-events: none; }
   .leaflet-xacc-pane path { filter: drop-shadow(0 0 2px rgba(0, 0, 0, .6)); }
@@ -190,9 +191,9 @@
     var esri = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
     if (!map) {
       map = L.map('xmap', { zoomControl: true, scrollWheelZoom: false, attributionControl: true, zoomSnap: 0.5 }).setView([d.watches[0].lat, d.watches[0].lng], 15);
-      var tone = dark ? 'Dark' : 'Light';
-      layers.base = L.tileLayer(esri + 'Canvas/World_' + tone + '_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 16, maxZoom: 19, attribution: 'Esri, HERE, Garmin, © OpenStreetMap' });
-      layers.ref = L.tileLayer(esri + 'Canvas/World_' + tone + '_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 16, maxZoom: 19 });
+      // Street map with buildings (the gray canvas maps show no houses); in the dark design darkened by a CSS filter
+      layers.base = L.tileLayer(esri + 'World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, className: dark ? 'xdark' : '', attribution: 'Esri, HERE, Garmin, © OpenStreetMap' });
+      layers.ref = L.layerGroup();
       layers.img = L.tileLayer(esri + 'World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '© Esri' });
       layers.lbl = L.tileLayer(esri + 'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
       setLayer(sat);
