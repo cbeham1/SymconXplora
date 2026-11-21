@@ -21,6 +21,9 @@ class XploraCloud extends IPSModule
     /** The watch list only comes with the login; the configurator logs in again when it is older than this. */
     private const WARDS_MAX_AGE = 300;
     private const PAUSE_AFTER_THROTTLING = 3600;
+    private const WATCH_MODULE = '{DF4743D6-EF1E-4698-8F22-BE7930F405FE}';
+    /** Automatic marker colors of the overview tile (distinct from the status colors green/orange/purple). */
+    private const OVERVIEW_COLORS = ['#3d9bff', '#ff4f9a', '#f2c81d', '#19c3c9', '#a07cff', '#ff7a2f', '#7ed957'];
 
     private const STATUS_LOGIN_FAILED = 201;
     private const STATUS_THROTTLED = 202;
@@ -52,6 +55,11 @@ class XploraCloud extends IPSModule
         $this->RegisterAttributeString('CredentialHash', '');
         $this->RegisterAttributeString('Wards', '[]');
         $this->RegisterAttributeInteger('PauseUntil', 0);
+
+        // Overview tile: the cloud instance itself as tile with all watches on one map
+        $this->RegisterPropertyBoolean('OverviewTile', false);
+        $this->RegisterPropertyInteger('OverviewTheme', 0);
+        $this->RegisterAttributeString('Overview', '{}');
     }
 
     public function ApplyChanges(): void
@@ -69,7 +77,38 @@ class XploraCloud extends IPSModule
             $this->WriteAttributeInteger('PauseUntil', 0);
         }
 
+        // Overview tile (HTML-SDK, not available in older Symcon versions)
+        if (method_exists($this, 'SetVisualizationType')) {
+            $this->SetVisualizationType($this->ReadPropertyBoolean('OverviewTile') ? 1 : 0);
+        }
+        $this->UpdateOverview();
+
         $this->SetStatus($this->HasCredentials() ? IS_ACTIVE : IS_INACTIVE);
+    }
+
+    /**
+     * HTML-SDK: overview tile with all watches of this account on one map (colored markers with legend).
+     * The watches send their data after each update (function "Overview"), updates arrive via handleMessage().
+     */
+    public function GetVisualizationTile(): string
+    {
+        $texts = json_encode([
+            'map'      => $this->Translate('Map'),
+            'sat'      => $this->Translate('Satellite'),
+            'all'      => $this->Translate('Show all'),
+            'battery'  => $this->Translate('Battery'),
+            'now'      => $this->Translate('now'),
+            'min'      => $this->Translate('%d min'),
+            'h'        => $this->Translate('%d h'),
+            'd'        => $this->Translate('%d d'),
+            'ago'      => $this->Translate('%s ago'),
+        ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG);
+        $initial = json_encode($this->OverviewMessage(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        return strtr((string) file_get_contents(__DIR__ . '/overview.html'), [
+            '%TEXTS%'   => $texts,
+            '%THEME%'   => (string) $this->ReadPropertyInteger('OverviewTheme'),
+            '%INITIAL%' => json_encode($initial, JSON_HEX_TAG),
+        ]);
     }
 
     /**
@@ -100,6 +139,11 @@ class XploraCloud extends IPSModule
                     $this->CheckWardID($wardID);
                     $result = $this->Query(self::QUERY_ASK_LOCATE, ['uid' => $wardID], 'AskWatchLocate')['askWatchLocate'] ?? null;
                     break;
+                case 'Overview':
+                    // Data of a watch for the overview tile (no cloud request)
+                    $this->StoreOverviewEntry((int) ($request['InstanceID'] ?? 0), (array) ($request['Entry'] ?? []));
+                    $result = true;
+                    break;
                 default:
                     throw new RuntimeException($this->Translate('Unknown function'));
             }
@@ -124,6 +168,59 @@ class XploraCloud extends IPSModule
         $names = array_column($this->GetWardList(), 'Name');
         return $this->Translate('Login successful') . "\n" . $this->Translate('Watches') . ': '
             . ($names === [] ? '-' : implode(', ', $names));
+    }
+
+    private function OverviewActive(): bool
+    {
+        return $this->ReadPropertyBoolean('OverviewTile') && method_exists($this, 'UpdateVisualizationValue');
+    }
+
+    private function StoreOverviewEntry(int $instanceID, array $entry): void
+    {
+        if ($instanceID <= 0 || !$this->OverviewActive()) {
+            return;
+        }
+        $stored = json_decode($this->ReadAttributeString('Overview'), true) ?: [];
+        $stored[(string) $instanceID] = $entry;
+        $this->WriteAttributeString('Overview', json_encode($stored));
+        $this->UpdateOverview();
+    }
+
+    private function UpdateOverview(): void
+    {
+        if ($this->OverviewActive() && IPS_GetKernelRunlevel() === KR_READY) {
+            $this->UpdateVisualizationValue(json_encode($this->OverviewMessage()));
+        }
+    }
+
+    /**
+     * Message for the overview tile: all watch instances connected to this cloud instance that have sent data,
+     * sorted by name, each with its marker color (own setting of the watch or automatic from the palette).
+     */
+    private function OverviewMessage(): array
+    {
+        $stored = json_decode($this->ReadAttributeString('Overview'), true) ?: [];
+        $watches = [];
+        foreach (IPS_GetInstanceListByModuleID(self::WATCH_MODULE) as $id) {
+            if (IPS_GetInstance($id)['ConnectionID'] !== $this->InstanceID || !isset($stored[(string) $id])) {
+                continue;
+            }
+            $entry = (array) $stored[(string) $id];
+            $entry['id'] = $id;
+            $entry['name'] = (string) preg_replace('/^Xplora\s+/u', '', IPS_GetName($id));
+            $watches[] = $entry;
+        }
+        usort($watches, static fn (array $a, array $b): int => strnatcasecmp($a['name'], $b['name']));
+        $auto = 0;
+        foreach ($watches as &$watch) {
+            $color = (int) ($watch['markerColor'] ?? -1);
+            $watch['markerColor'] = $color >= 0 ? sprintf('#%06x', $color) : self::OVERVIEW_COLORS[$auto++ % count(self::OVERVIEW_COLORS)];
+        }
+        unset($watch);
+        if ($watches === []) {
+            return ['empty' => $this->Translate('No watch data yet. The watches send their location after the next update.')];
+        }
+        return ['watches' => $watches];
     }
 
     private function HasCredentials(): bool

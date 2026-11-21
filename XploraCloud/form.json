@@ -44,6 +44,40 @@
                     "value": "en-US"
                 }
             ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Overview tile",
+            "items": [
+                {
+                    "type": "Label",
+                    "caption": "Optional: this instance as tile in the tile visualization with all watches on one map (colored markers with legend). The marker color is set in each watch instance (transparent = automatic)."
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "OverviewTile",
+                    "caption": "Instance as overview tile of all watches"
+                },
+                {
+                    "type": "Select",
+                    "name": "OverviewTheme",
+                    "caption": "Design of the overview tile",
+                    "options": [
+                        {
+                            "caption": "Automatic (design of the visualization)",
+                            "value": 0
+                        },
+                        {
+                            "caption": "Dark",
+                            "value": 1
+                        },
+                        {
+                            "caption": "Light",
+                            "value": 2
+                        }
+                    ]
+                }
+            ]
         }
     ],
     "actions": [

@@ -20,11 +20,12 @@ Hält die Anmeldung an einem Xplora-Elternkonto und leitet die Anfragen der Inst
 * Anmeldung mit E-Mail-Adresse oder Telefonnummer und Passwort der Xplora-Eltern-App
 * Hält die Sitzung und meldet sich bei Ablauf automatisch neu an
 * Pausiert alle Anfragen für eine Stunde, wenn Xplora drosselt (HTTP 429)
+* Optional Übersichtskachel: alle Uhren des Kontos auf einer Karte (farbige Punkte mit Anfangsbuchstaben, Legende mit Status, Abstand, Ortungszeit und Akku)
 
 ### 2. Voraussetzungen
 
-- IP-Symcon 7.0 oder neuer
-- Xplora-Elternkonto mit mindestens einer Uhr
+- IP-Symcon 7.0 oder neue
+- Xplora-Elternkonto mit mindestens einer Uh
 - Internetzugang zu `api.prod.myxplora.com`
 
 ### 3. Installation
@@ -43,8 +44,13 @@ Hält die Anmeldung an einem Xplora-Elternkonto und leitet die Anfragen der Inst
 | Passwort | Passwort der Eltern-App |
 | Sprache | Sprache von Adressen und Meldungen von Xplora |
 | Verbindung testen | meldet sich an und zeigt die Uhren des Kontos |
+| Instanz als Übersichtskachel aller Uhren | die Cloud-Instanz in die Kachel-Visualisierung ziehen: Karte mit allen Uhren, Legende (Klick = auf die Uhr zoomen), „Alle zeigen“, Karte/Satellit – Standard aus |
+| Design der Übersichtskachel | Automatisch (Design der Visualisierung), Dunkel oder Hell |
 
 Das Passwort wird – wie in der Eltern-App – nur als MD5-Prüfsumme an Xplora gesendet.
+
+Die Punktfarbe je Uhr wird in der Uhren-Instanz eingestellt („Punktfarbe in der Übersichtskachel“, transparent = automatisch).
+Die Uhren schicken ihre Daten nach jeder Aktualisierung an die Übersicht – es entstehen keine zusätzlichen Anfragen an Xplora.
 
 ### 5. Statusvariablen und Profile
 

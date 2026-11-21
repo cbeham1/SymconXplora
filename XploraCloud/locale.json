@@ -25,7 +25,24 @@
             "Paused after throttling by Xplora until %s": "Nach Drosselung durch Xplora pausiert bis %s",
             "Connection error": "Verbindungsfehler",
             "Throttled by Xplora (HTTP 429)": "Von Xplora gedrosselt (HTTP 429)",
-            "Invalid response": "Ungültige Antwort"
+            "Invalid response": "Ungültige Antwort",
+            "Overview tile": "Übersichtskachel",
+            "Optional: this instance as tile in the tile visualization with all watches on one map (colored markers with legend). The marker color is set in each watch instance (transparent = automatic).": "Optional: diese Instanz als Kachel in der Kachel-Visualisierung mit allen Uhren auf einer Karte (farbige Punkte mit Legende). Die Punktfarbe wird in der jeweiligen Uhren-Instanz eingestellt (transparent = automatisch).",
+            "Instance as overview tile of all watches": "Instanz als Übersichtskachel aller Uhren",
+            "Design of the overview tile": "Design der Übersichtskachel",
+            "Automatic (design of the visualization)": "Automatisch (Design der Visualisierung)",
+            "Dark": "Dunkel",
+            "Light": "Hell",
+            "Map": "Karte",
+            "Satellite": "Satellit",
+            "Show all": "Alle zeigen",
+            "Battery": "Akku",
+            "now": "jetzt",
+            "%d min": "%d min",
+            "%d h": "%d h",
+            "%d d": "%d T",
+            "%s ago": "vor %s",
+            "No watch data yet. The watches send their location after the next update.": "Noch keine Daten. Die Uhren senden ihren Standort nach der nächsten Aktualisierung."
         }
     }
 }

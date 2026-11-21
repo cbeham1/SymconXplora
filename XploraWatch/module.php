@@ -54,6 +54,7 @@ class XploraWatch extends IPSModule
         $this->RegisterPropertyBoolean('ShowPlaceName', true);
         $this->RegisterPropertyBoolean('TileMap', true);
         $this->RegisterPropertyInteger('TileTheme', 0);
+        $this->RegisterPropertyInteger('OverviewColor', -1);
         $this->RegisterPropertyBoolean('ShowHistory', false);
         $this->RegisterPropertyInteger('HistoryDays', 15);
 
@@ -130,6 +131,10 @@ class XploraWatch extends IPSModule
             return;
         }
         $this->SetStatus(IS_ACTIVE);
+        // Overview tile of the cloud instance: send the stored data (e.g. after a changed marker color)
+        if (IPS_GetKernelRunlevel() === KR_READY) {
+            $this->SendOverview();
+        }
 
         // First update shortly after the changes are applied (not directly: during kernel start and while the
         // configurator creates the instance the data flow may not be ready yet). Update() sets the regular interval.
@@ -295,7 +300,8 @@ class XploraWatch extends IPSModule
             'place'     => '',
         ];
         // Name of the town/village instead of "On the way" (only needed for the tiles and only when away)
-        if (($this->ReadPropertyBoolean('ShowTile') || $this->ReadPropertyBoolean('ShowMiniTile') || $this->ReadPropertyBoolean('InstanceTile'))
+        $overview = $this->ParentOverviewActive();
+        if (($this->ReadPropertyBoolean('ShowTile') || $this->ReadPropertyBoolean('ShowMiniTile') || $this->ReadPropertyBoolean('InstanceTile') || $overview)
             && $this->ReadPropertyBoolean('ShowPlaceName') && $atHome === false && $atPlace2 !== true) {
             $tileData['place'] = $this->NearestPlace($latitude, $longitude, trim((string) ($location['city'] ?? '')));
         }
@@ -305,10 +311,15 @@ class XploraWatch extends IPSModule
         if ($this->ReadPropertyBoolean('ShowMiniTile')) {
             $this->SetValueIfChanged('MiniTile', $this->MiniTileHTML($tileData));
         }
+        if ($this->InstanceTileActive() || $overview) {
+            $this->WriteAttributeString('TileData', json_encode($tileData));
+        }
         if ($this->InstanceTileActive()) {
             $fresh = $tileData['time'] > $this->ReadAttributeInteger('LastLocateRequest');
-            $this->WriteAttributeString('TileData', json_encode($tileData));
             $this->UpdateVisualizationValue(json_encode($this->InstanceTileMessage($fresh)));
+        }
+        if ($overview) {
+            $this->SendOverview();
         }
 
         // Ask the watch for a new location if the last one is too old (result arrives with a later update)
@@ -937,6 +948,52 @@ class XploraWatch extends IPSModule
             // Day route shown in the tile, otherwise only a button "Signal tracking" that opens the history in the whole tile
             'route'    => $this->ReadPropertyBoolean('TileRoute'),
         ];
+    }
+
+    /** The cloud instance shows the overview tile of all watches. */
+    private function ParentOverviewActive(): bool
+    {
+        $parentID = IPS_GetInstance($this->InstanceID)['ConnectionID'];
+        if ($parentID <= 0 || !IPS_InstanceExists($parentID)) {
+            return false;
+        }
+        $config = json_decode(IPS_GetConfiguration($parentID), true);
+        return is_array($config) && !empty($config['OverviewTile']);
+    }
+
+    /** Sends the data of the last location to the overview tile of the cloud instance (no cloud request). */
+    private function SendOverview(): void
+    {
+        $d = json_decode($this->ReadAttributeString('TileData'), true);
+        if (!is_array($d) || !$this->HasActiveParent() || !$this->ParentOverviewActive()) {
+            return;
+        }
+        $dec = $this->Translate('.');
+        $km = static fn (float $m): string => $m < 1000 ? sprintf('%d m', (int) round($m)) : number_format($m / 1000, $m < 10000 ? 1 : 0, $dec, '') . ' km';
+        [$status, $color] = $this->StatusInfo($d);
+        $sub = '';
+        if (($d['distance'] ?? null) !== null && $d['atHome'] !== true) {
+            $sub = sprintf($this->Translate('%s from home'), $km((float) $d['distance']));
+        }
+        $entry = [
+            'markerColor' => $this->ReadPropertyInteger('OverviewColor'),
+            'status'      => $status,
+            'color'       => $color,
+            'sub'         => $sub,
+            'battery'     => $d['battery'],
+            'charging'    => (bool) $d['charging'],
+            'time'        => (int) $d['time'],
+            'lat'         => (float) $d['lat'],
+            'lng'         => (float) $d['lng'],
+            'accuracy'    => (int) $d['accuracy'],
+            'address'     => $d['address'],
+            'atHome'      => $d['atHome'],
+            'home'        => $this->GetHome(),
+        ];
+        $this->SendDataToParent(json_encode([
+            'DataID' => self::DATA_TO_PARENT,
+            'Buffer' => json_encode(['Function' => 'Overview', 'InstanceID' => $this->InstanceID, 'Entry' => $entry]),
+        ]));
     }
 
     /** Recorded locations of the last $seconds as [time, latitude, longitude, accuracy]. */

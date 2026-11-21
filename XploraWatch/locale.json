@@ -48,6 +48,7 @@
             "Create status tile (HTML box for the tile visualization)": "Statuskachel anlegen (HTML-Box für die Kachel-Visualisierung)",
             "Map of the location as background of the status tile (Esri)": "Karte des Standorts als Hintergrund der Statuskachel (Esri)",
             "Design of the status tile": "Design der Statuskachel",
+            "Marker color in the overview tile of the cloud instance (transparent = automatic)": "Punktfarbe in der Übersichtskachel der Cloud-Instanz (transparent = automatisch)",
             "Automatic (design of the visualization)": "Automatisch (Design der Visualisierung)",
             "Dark": "Dunkel",
             "Light": "Hell",

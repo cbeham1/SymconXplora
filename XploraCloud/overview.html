@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  html, body { margin: 0 !important; height: 100%; overflow: hidden; background: transparent; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  #xw { position: fixed; inset: 0; container: tile / size; overflow: hidden; color: var(--fg); background: var(--bg); font-family: inherit; }
+  #xw * { box-sizing: border-box; }
+  #xw.vd { --bg: #1d2228; --fg: #e8edf2; --sub: #9aa5b1; --box: rgba(30, 36, 43, .78); --line: rgba(255, 255, 255, .09); --track: rgba(255, 255, 255, .12); --on: #e08a00; }
+  #xw.vl { --bg: #ffffff; --fg: #1f2933; --sub: #5b6672; --box: rgba(255, 255, 255, .84); --line: rgba(0, 0, 0, .09); --track: rgba(0, 0, 0, .08); --on: #e08a00; }
+  .glass { background: var(--box); border: 1px solid var(--line); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+
+  #xmap { position: absolute; inset: 0; background: var(--bg); }
+  #xmap .leaflet-top { top: var(--mt); }
+  #xmap .leaflet-left { left: calc(var(--ms) - 10px); }
+  #xmap .leaflet-control-attribution { background: transparent; color: var(--sub); font-size: 9px; }
+  #xmap .leaflet-control-attribution a { color: var(--sub); }
+  #xmap .leaflet-bar a { background: var(--box); color: var(--fg); border-color: var(--line); backdrop-filter: blur(8px); }
+  #xvg { position: absolute; inset: 0; z-index: 440; pointer-events: none; box-shadow: inset 0 0 120px 50px var(--bg); }
+  #xo { position: absolute; left: 0; right: 0; bottom: 0; z-index: 450; pointer-events: none; }
+  .leaflet-xacc-pane path { filter: drop-shadow(0 0 2px rgba(0, 0, 0, .6)); }
+
+  /* Marker: colored dot with the initial of the watch, pulsing ring */
+  .xpin { width: 26px; height: 26px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 8px rgba(0, 0, 0, .55); position: relative;
+          color: #fff; font: 700 12px/20px system-ui, sans-serif; text-align: center; text-shadow: 0 1px 2px rgba(0, 0, 0, .5); }
+  .xpin::after { content: ""; position: absolute; inset: -11px; border-radius: 50%; border: 2px solid var(--c); opacity: 0; animation: xpulse 2.6s ease-out infinite; }
+  .xpin.old::after { animation: none; }
+  .xpin.old { opacity: .7; }
+  @keyframes xpulse { 0% { transform: scale(.4); opacity: .9; } 100% { transform: scale(1.7); opacity: 0; } }
+  .xico { font-size: 20px; line-height: 22px; text-align: center; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .6)); }
+
+  #xctl { position: absolute; top: var(--mt); right: var(--ms); z-index: 1000; display: flex; gap: 6px; }
+  #xctl button { color: var(--fg); border-radius: 18px; padding: 6px 12px; font-family: inherit; font-weight: 600; font-size: 12px; cursor: pointer; white-space: nowrap; }
+  #xctl .seg { display: flex; border-radius: 18px; overflow: hidden; }
+  #xctl .seg button { border: 0; border-radius: 0; background: transparent; }
+  #xctl button.on { background: var(--on); color: #fff; }
+  #xctl svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; vertical-align: -3px; }
+
+  /* Legend: one card per watch */
+  #xc { position: absolute; left: var(--ms); right: var(--ms); bottom: var(--mb); z-index: 1000;
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(14em, 1fr)); gap: .5em;
+        font-size: clamp(11px, min(1.15cqw, 2.4cqh), 18px); }
+  .xl { display: flex; align-items: center; gap: .75em; min-width: 0; border-radius: .9em; padding: .6em .85em; cursor: pointer; border-left: .3em solid var(--c); }
+  .xl.sel { outline: 2px solid var(--c); }
+  .xdot { width: 1.1em; height: 1.1em; border-radius: 50%; background: var(--c); border: 2px solid #fff; flex: none; box-shadow: 0 0 4px rgba(0, 0, 0, .4); }
+  .xli { min-width: 0; flex: 1; display: flex; flex-direction: column; }
+  .xn { font-weight: 700; font-size: 1.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .xs { font-weight: 700; font-size: 2em; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .xu { color: var(--sub); font-size: max(10px, .8em); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .xring { width: 4.4em; height: 4.4em; flex: none; }
+  @container tile (max-height: 300px) { .xu { display: none; } }
+
+  #xe { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center; color: var(--sub); }
+</style>
+</head>
+<body>
+<div id="xw" class="vd">
+  <div id="xmap"></div><div id="xvg"></div><div id="xo"></div>
+  <div id="xctl"></div>
+  <div id="xc"></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(function () {
+  var T = %TEXTS%, THEME = %THEME%;
+  var P = new URLSearchParams(location.search), W = document.getElementById('xw'), C = document.getElementById('xc');
+  var data = null, dark = true, sat = false, map = null, layers = {}, live = null, accRenderer = null, sel = 0, fitted = false, markers = {};
+  var LOCATE = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>';
+
+  function color(n) {
+    var v = getComputedStyle(document.documentElement).getPropertyValue(n).replace(/[^0-9a-f]/gi, '');
+    if (v.length < 6) { return null; }
+    return v.length === 8 && /^ff/i.test(v) ? v.slice(2) : v.slice(0, 6);
+  }
+  function lum(h) { var c = parseInt(h, 16); return 0.299 * (c >> 16) + 0.587 * (c >> 8 & 255) + 0.114 * (c & 255); }
+  function px(n, d) { var v = parseFloat(P.get(n)); return isNaN(v) ? d : v; }
+  function esc(t) { return String(t).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }
+  function hm(t) { var d = new Date(t * 1000); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+  function span(s) {
+    if (s < 60) { return T.now; }
+    return s < 3600 ? T.min.replace('%d', Math.floor(s / 60)) : s < 86400 ? T.h.replace('%d', Math.floor(s / 3600)) : T.d.replace('%d', Math.floor(s / 86400));
+  }
+  function age(t) {
+    var s = Math.max(0, Math.floor(Date.now() / 1000) - t);
+    return t <= 0 ? '' : (s < 60 ? T.now : T.ago.replace('%s', span(s)));
+  }
+
+  var cb = color('--card-color'), cf = color('--content-color');
+  dark = THEME === 1 || (THEME === 0 && (cb ? lum(cb) < (cf ? lum(cf) : 128) : !matchMedia('(prefers-color-scheme: light)').matches));
+  W.className = dark ? 'vd' : 'vl';
+  if (THEME === 0 && cb) { W.style.setProperty('--bg', '#' + cb); }
+  W.style.setProperty('--mt', Math.max(8, px('margintop', 12)) + 'px');
+  W.style.setProperty('--ms', Math.max(10, px('marginside', 12)) + 'px');
+  W.style.setProperty('--mb', Math.max(8, px('marginbottom', 12)) + 'px');
+  try { sat = localStorage.getItem('xplTileSat') === '1'; } catch (e) {}
+
+  // Battery ring as in the watch tiles
+  function ring(b, bc, charging) {
+    if (b === null || b === undefined) { return ''; }
+    var r = 42, u = 2 * Math.PI * r;
+    return '<svg class="xring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="' + r + '" fill="none" stroke="var(--track)" stroke-width="9"/>'
+      + '<circle cx="50" cy="50" r="' + r + '" fill="none" stroke="' + bc + '" stroke-width="9" stroke-linecap="round" stroke-dasharray="' + u.toFixed(1)
+      + '" stroke-dashoffset="' + (u * (1 - b / 100)).toFixed(1) + '" transform="rotate(-90 50 50)"/>'
+      + '<text x="50" y="49" text-anchor="middle" dominant-baseline="central" fill="var(--fg)" font-size="25" font-weight="700">' + b + '%</text>'
+      + '<text x="50" y="71" text-anchor="middle" fill="var(--sub)" font-size="11">' + (charging ? '⚡ ' : '') + esc(T.battery) + '</text></svg>';
+  }
+
+  function render() {
+    var d = data;
+    if (!d) { return; }
+    var e = document.getElementById('xe');
+    if (d.empty) {
+      C.innerHTML = '';
+      if (!e) { W.insertAdjacentHTML('beforeend', '<div id="xe">' + esc(d.empty) + '</div>'); }
+      return;
+    }
+    if (e) { e.remove(); }
+    var h = '';
+    d.watches.forEach(function (w) {
+      var b = w.battery, bc = b === null ? '' : (b <= 20 ? '#e74c3c' : (b <= 40 ? '#f5a623' : '#2ecc71'));
+      var sub = [w.sub, hm(w.time) + ' · ' + age(w.time)].filter(Boolean).join(' · ');
+      h += '<div class="xl glass' + (sel === w.id ? ' sel' : '') + '" data-id="' + w.id + '" style="--c:' + w.markerColor + '">'
+        + '<span class="xdot"></span><div class="xli"><span class="xn">' + esc(w.name) + '</span>'
+        + '<span class="xs" style="color:' + w.color + '">' + esc(w.status) + '</span>'
+        + '<span class="xu" data-ts="' + w.time + '" data-sub="' + esc(w.sub || '') + '">' + esc(sub) + '</span></div>'
+        + ring(b, bc, w.charging) + '</div>';
+    });
+    C.innerHTML = h;
+    C.querySelectorAll('.xl').forEach(function (el) {
+      el.onclick = function () { focus(+el.getAttribute('data-id')); };
+    });
+    controls();
+    drawMap();
+  }
+
+  function controls() {
+    var c = document.getElementById('xctl');
+    c.innerHTML = '<div class="seg glass"><button id="bmap">' + esc(T.map) + '</button><button id="bsat">' + esc(T.sat) + '</button></div>'
+      + '<button id="ball" class="glass">' + LOCATE + ' ' + esc(T.all) + '</button>';
+    document.getElementById('bmap').className = sat ? '' : 'on';
+    document.getElementById('bsat').className = sat ? 'on' : '';
+    document.getElementById('bmap').onclick = function () { setLayer(false); };
+    document.getElementById('bsat').onclick = function () { setLayer(true); };
+    document.getElementById('ball').onclick = function () { sel = 0; render(); fitAll(); };
+  }
+
+  function setLayer(s) {
+    sat = s;
+    try { localStorage.setItem('xplTileSat', s ? '1' : '0'); } catch (e) {}
+    if (map) {
+      ['base', 'ref', 'img', 'lbl'].forEach(function (k) { map.removeLayer(layers[k]); });
+      (s ? ['img', 'lbl'] : ['base', 'ref']).forEach(function (k) { layers[k].addTo(map); });
+    }
+    controls();
+  }
+
+  // Free map area = between the buttons at the top and the legend at the bottom
+  function padding() {
+    var top = px('margintop', 12) + 50, bottom = W.clientHeight - (C.getBoundingClientRect().top - W.getBoundingClientRect().top) + 30;
+    return { paddingTopLeft: [40, top], paddingBottomRight: [40, Math.max(30, bottom)] };
+  }
+
+  function fitAll() {
+    if (!map || !data || data.empty) { return; }
+    var pts = data.watches.map(function (w) { return [w.lat, w.lng]; });
+    data.watches.forEach(function (w) { if (w.home) { pts.push(w.home); } });
+    var o = padding();
+    o.maxZoom = 16;
+    o.animate = false;
+    map.fitBounds(L.latLngBounds(pts), o);
+  }
+
+  function focus(id) {
+    sel = sel === id ? 0 : id;
+    render();
+    if (!sel) { fitAll(); return; }
+    var w = data.watches.filter(function (x) { return x.id === id; })[0];
+    if (!w || !map) { return; }
+    var o = padding(), h = W.clientHeight, y = (o.paddingTopLeft[1] + h - o.paddingBottomRight[1]) / 2;
+    map.setView([w.lat, w.lng], 17, { animate: false });
+    map.panBy([0, h / 2 - y], { animate: false });
+    if (markers[id]) { markers[id].openTooltip(); }
+  }
+
+  function drawMap() {
+    var d = data;
+    if (typeof L === 'undefined') { return; }
+    var esri = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
+    if (!map) {
+      map = L.map('xmap', { zoomControl: true, scrollWheelZoom: false, attributionControl: true, zoomSnap: 0.5 }).setView([d.watches[0].lat, d.watches[0].lng], 15);
+      var tone = dark ? 'Dark' : 'Light';
+      layers.base = L.tileLayer(esri + 'Canvas/World_' + tone + '_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 16, maxZoom: 19, attribution: 'Esri, HERE, Garmin, © OpenStreetMap' });
+      layers.ref = L.tileLayer(esri + 'Canvas/World_' + tone + '_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 16, maxZoom: 19 });
+      layers.img = L.tileLayer(esri + 'World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '© Esri' });
+      layers.lbl = L.tileLayer(esri + 'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
+      setLayer(sat);
+      live = L.layerGroup().addTo(map);
+      map.createPane('xacc').style.zIndex = 460;
+      accRenderer = L.svg({ pane: 'xacc' });
+      window.addEventListener('resize', function () { map.invalidateSize(); fade(); });
+    }
+    live.clearLayers();
+    markers = {};
+    var homes = {};
+    d.watches.forEach(function (w) {
+      if (w.home) {
+        var k = w.home[0].toFixed(4) + ',' + w.home[1].toFixed(4);
+        if (!homes[k]) { homes[k] = 1; L.marker(w.home, { icon: L.divIcon({ className: 'xico', html: '🏠', iconSize: [24, 24] }), interactive: false }).addTo(live); }
+      }
+    });
+    var now = Date.now() / 1000;
+    d.watches.forEach(function (w, i) {
+      if (w.accuracy > 0) {
+        L.circle([w.lat, w.lng], { radius: w.accuracy, color: w.markerColor, weight: 1, opacity: .8, fillOpacity: .12, interactive: false, pane: 'xacc', renderer: accRenderer }).addTo(live);
+      }
+      var old = now - w.time > 3 * 3600, ini = esc((w.name || '?').charAt(0).toUpperCase());
+      markers[w.id] = L.marker([w.lat, w.lng], {
+        zIndexOffset: 1000 + i,
+        icon: L.divIcon({ className: '', html: '<div class="xpin' + (old ? ' old' : '') + '" style="background:' + w.markerColor + ';--c:' + w.markerColor + '">' + ini + '</div>', iconSize: [26, 26], iconAnchor: [13, 13] })
+      }).bindTooltip(esc(w.name) + ' · ' + esc(w.status) + ' · ' + hm(w.time), { direction: 'top', offset: [0, -14] })
+        .on('click', function () { focus(w.id); }).addTo(live);
+    });
+    fade();
+    if (!fitted) { fitted = true; setTimeout(function () { map.invalidateSize(); fitAll(); }, 60); }
+  }
+
+  function fade() {
+    var o = document.getElementById('xo'), top = C.getBoundingClientRect().top - W.getBoundingClientRect().top, f = Math.max(30, Math.min(110, top * 0.3));
+    o.style.top = (top - f) + 'px';
+    o.style.background = 'linear-gradient(180deg, transparent 0, var(--bg) ' + f + 'px)';
+  }
+
+  window.handleMessage = function (raw) {
+    if (typeof raw !== 'string') { return; }
+    var d;
+    try { d = JSON.parse(raw); } catch (e) { return; }
+    if (!d || typeof d !== 'object') { return; }
+    data = d;
+    render();
+  };
+  setInterval(function () {
+    C.querySelectorAll('.xu').forEach(function (el) {
+      var t = +el.getAttribute('data-ts'), s = el.getAttribute('data-sub');
+      el.textContent = [s, hm(t) + ' · ' + age(t)].filter(Boolean).join(' · ');
+    });
+  }, 30000);
+  handleMessage(%INITIAL%);
+})();
+</script>
+</body>
+</html>

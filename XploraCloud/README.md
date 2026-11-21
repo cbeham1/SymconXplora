@@ -18,10 +18,11 @@ Holds the login to an Xplora parent account and forwards the requests of the Xpl
 * Login with e-mail address or phone number and password of the Xplora parent app
 * Keeps the session and logs in again automatically when it expires
 * Pauses all requests for one hour when Xplora throttles requests (HTTP 429)
+* Optional overview tile: all watches of the account on one map (colored markers with initials, legend with status, distance, location time and battery)
 
 ### 2. Requirements
 
-- IP-Symcon 7.0 or newer
+- IP-Symcon 7.0 or newe
 - Xplora parent account with at least one watch
 - Internet access to `api.prod.myxplora.com`
 
@@ -40,8 +41,13 @@ Holds the login to an Xplora parent account and forwards the requests of the Xpl
 | Password            | Password of the parent app                                        |
 | Language            | Language of addresses and messages from Xplora                    |
 | Test connection     | Logs in and shows the watches of the account                      |
+| Instance as overview tile of all watches | Drag the cloud instance into the tile visualization: map with all watches, legend (click = zoom to the watch), "Show all", map/satellite – default off |
+| Design of the overview tile | Automatic (design of the visualization), dark or light |
 
 The password is sent to Xplora as MD5 hash only, the same way the parent app does it.
+
+The marker color of each watch is set in the watch instance ("Marker color in the overview tile", transparent = automatic).
+The watches send their data to the overview after each update – there are no additional requests to Xplora.
 
 ### 5. Status variables and profiles
 

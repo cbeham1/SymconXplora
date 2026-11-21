@@ -155,6 +155,12 @@
             ]
         },
         {
+            "type": "SelectColor",
+            "name": "OverviewColor",
+            "caption": "Marker color in the overview tile of the cloud instance (transparent = automatic)",
+            "allowTransparent": true
+        },
+        {
             "type": "CheckBox",
             "name": "ShowMap",
             "caption": "Create map variable (OpenStreetMap)"
